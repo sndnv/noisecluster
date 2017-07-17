@@ -1,2 +1,28 @@
-*.class
-*.log
+logs
+target
+
+.idea
+.idea_modules
+.classpath
+.project
+.settings
+RUNNING_PID
+
+# cs / .NET
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# NuGet Packages
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
