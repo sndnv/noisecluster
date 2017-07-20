@@ -13,31 +13,41 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
-package noisecluster.control
+package noisecluster.control.cluster
 
-import akka.actor.{Actor, ActorLogging, ActorSystem, Address, AddressFromURIString, Props}
+import akka.actor.{ActorSystem, AddressFromURIString}
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent._
-import akka.cluster.MemberStatus
-import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import akka.util.Timeout
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import noisecluster.control.LocalHandlers
 
-class ClusterService(
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
+class Service(
   private val systemName: String,
   private val actorProvider: String,
+  private val localHost: String,
   private val localPort: Int,
   private val clusterHost: String,
   private val clusterPort: Int,
-  private val handlers: LocalHandlers
-) {
-  private val isMaster = localPort == clusterPort
+  private val localHandlers: Option[LocalHandlers] = None
+)(implicit ec: ExecutionContext, timeout: Timeout) {
+  private val isMaster =  localHost == clusterHost && localPort == clusterPort
 
   private val config = ConfigFactory.load()
     .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef(actorProvider))
+    .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(localHost))
     .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(localPort))
 
   private val system = ActorSystem(systemName, config)
   private val cluster = Cluster(system)
-  private val messenger = system.actorOf(ClusterMessenger.props(handlers))
+
+  private val messenger = localHandlers match {
+    case Some(handlers) => system.actorOf(TargetMessenger.props(handlers))
+    case None => system.actorOf(SourceMessenger.props(30.seconds))
+  }
+
   private val clusterAddress = if(isMaster) {
     cluster.selfAddress
   } else {
@@ -46,25 +56,12 @@ class ClusterService(
 
   cluster.join(clusterAddress)
 
-  def startTransport(): Unit = {
-    //TODO
-  }
-
-  def stopTransport(): Unit = {
-    //TODO
-  }
-
-  def restart(level: ServiceLevel): Unit = {
-    //TODO
-  }
-
   def terminate(): Unit = {
-    //TODO - notify all nodes
     cluster.leave(cluster.selfAddress)
     system.terminate()
   }
 }
 
-object ClusterService {
+object Service {
 
 }

@@ -13,10 +13,9 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
-package noisecluster.control
+package noisecluster_multi_jvm.test.specs
 
-object Messages {
-  case class StartTransport()
-  case class StopTransport()
-  case class Restart(level: ServiceLevel)
-}
+import org.scalatest.concurrent.Eventually
+import org.scalatest.{AsyncWordSpecLike, Matchers}
+
+trait UnitSpec extends AsyncWordSpecLike with Matchers with Eventually

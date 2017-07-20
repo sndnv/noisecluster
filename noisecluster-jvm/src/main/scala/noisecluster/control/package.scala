@@ -15,6 +15,9 @@
   */
 package noisecluster
 
+import java.time.LocalDateTime
+import javax.sound.sampled.AudioFormat
+
 package object control {
   sealed trait ServiceLevel
   object ServiceLevel {
@@ -22,5 +25,47 @@ package object control {
     case object Transport extends ServiceLevel
     case object Application extends ServiceLevel
     case object Host extends ServiceLevel
+  }
+
+  sealed trait ServiceState
+  object ServiceState {
+    case object Starting extends ServiceState
+    case object Active extends ServiceState
+    case object Stopping extends ServiceState
+    case object Stopped extends ServiceState
+    case object Restarting extends ServiceState
+  }
+
+  case class NodeState(
+    audio: ServiceState,
+    transport: ServiceState,
+    application: ServiceState,
+    host: ServiceState
+  )
+
+  case class NodeInfo(
+    state: NodeState,
+    lastUpdate: LocalDateTime
+  )
+
+  case class AudioFormatContainer(
+    encoding: String,
+    sampleRate: Float,
+    sampleSizeInBits: Int,
+    channels: Int,
+    frameSize: Int,
+    frameRate: Float,
+    bigEndian: Boolean
+  ) {
+    def toAudioFormat: AudioFormat =
+      new AudioFormat(
+        new AudioFormat.Encoding(encoding),
+        sampleRate,
+        sampleSizeInBits,
+        channels,
+        frameSize,
+        frameRate,
+        bigEndian
+      )
   }
 }
