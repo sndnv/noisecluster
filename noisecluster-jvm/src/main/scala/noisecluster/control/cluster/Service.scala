@@ -15,53 +15,31 @@
   */
 package noisecluster.control.cluster
 
-import akka.actor.{ActorSystem, AddressFromURIString}
-import akka.cluster.Cluster
-import akka.util.Timeout
-import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import noisecluster.control.LocalHandlers
+import akka.actor.{ActorRef, ActorSystem}
+import akka.cluster.{Cluster, MemberStatus}
+import com.typesafe.config.Config
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
-
-class Service(
-  private val systemName: String,
-  private val actorProvider: String,
-  private val localHost: String,
-  private val localPort: Int,
-  private val clusterHost: String,
-  private val clusterPort: Int,
-  private val localHandlers: Option[LocalHandlers] = None
-)(implicit ec: ExecutionContext, timeout: Timeout) {
-  private val isMaster =  localHost == clusterHost && localPort == clusterPort
-
-  private val config = ConfigFactory.load()
-    .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef(actorProvider))
-    .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(localHost))
-    .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(localPort))
-
-  private val system = ActorSystem(systemName, config)
-  private val cluster = Cluster(system)
-
-  private val messenger = localHandlers match {
-    case Some(handlers) => system.actorOf(TargetMessenger.props(handlers))
-    case None => system.actorOf(SourceMessenger.props(30.seconds))
+abstract class Service(private val systemName: String, private val overrideConfig: Option[Config]) {
+  protected val system: ActorSystem = overrideConfig match {
+    case Some(config) => ActorSystem(systemName, config)
+    case None => ActorSystem(systemName)
   }
 
-  private val clusterAddress = if(isMaster) {
-    cluster.selfAddress
-  } else {
-    AddressFromURIString(s"akka.tcp://$systemName@$clusterHost:$clusterPort")
-  }
-
-  cluster.join(clusterAddress)
+  protected val cluster: Cluster = Cluster(system)
+  protected val messenger: ActorRef
 
   def terminate(): Unit = {
     cluster.leave(cluster.selfAddress)
     system.terminate()
   }
-}
 
-object Service {
+  def activeSources: Int = cluster.state.members.count {
+    member =>
+      member.status == MemberStatus.Up && member.roles.contains("source")
+  }
 
+  def activeTargets: Int = cluster.state.members.count {
+    member =>
+      member.status == MemberStatus.Up && member.roles.contains("target")
+  }
 }

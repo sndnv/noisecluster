@@ -15,20 +15,32 @@
   */
 package noisecluster.control.cluster
 
-import noisecluster.control.{AudioFormatContainer, NodeState}
+import noisecluster.audio.AudioFormatContainer
 
 object Messages {
+
   sealed trait ControlMessage
+
   case class StartAudio(formatContainer: Option[AudioFormatContainer]) extends ControlMessage
+
   case class StopAudio(restart: Boolean) extends ControlMessage
+
   case class StartTransport() extends ControlMessage
+
   case class StopTransport(restart: Boolean) extends ControlMessage
+
   case class StopApplication(restart: Boolean) extends ControlMessage
+
   case class StopHost(restart: Boolean) extends ControlMessage
 
   sealed trait SystemMessage
+
   case class RegisterSource() extends SystemMessage
+
   case class RegisterTarget() extends SystemMessage
+
   case class Ping() extends SystemMessage
+
   case class Pong(state: NodeState) extends SystemMessage
+
 }

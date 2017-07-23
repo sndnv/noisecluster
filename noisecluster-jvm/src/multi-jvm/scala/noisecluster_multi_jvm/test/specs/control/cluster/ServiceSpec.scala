@@ -17,41 +17,95 @@ package noisecluster_multi_jvm.test.specs.control.cluster
 
 import akka.remote.testconductor.RoleName
 import akka.remote.testkit._
-import akka.remote.transport.ThrottlerTransportAdapter
+import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import noisecluster.audio.AudioFormatContainer
+import noisecluster.control.cluster._
+import noisecluster.control.{LocalHandlers, ServiceState}
 import noisecluster_multi_jvm.test.specs.UnitSpec
+import noisecluster_multi_jvm.test.utils._
 
-import scala.concurrent.Future
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 object ServiceTestConfig extends MultiNodeConfig {
+  val systemName: String = "testClusterSpec"
+  val clusterPort: Int = 20001
 
-  import collection.JavaConverters._
+  val baseServiceConfig: Config = ConfigFactory.load()
+    .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(Seq(s"akka.tcp://$systemName@localhost:$clusterPort").asJava))
+    .withValue("akka.cluster.seed-node-timeout", ConfigValueFactory.fromAnyRef("15s"))
 
-  val baseConfig: Config = ConfigFactory.load()
-    .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("akka.cluster.ClusterActorRefProvider"))
-    .withValue("akka.remote.artery.advanced.test-mode", ConfigValueFactory.fromAnyRef("on"))
-    .withValue("akka.remote.netty.tcp.applied-adapters", ConfigValueFactory.fromIterable(Seq("trttl", "gremlin").asJava))
+  val sourceNode: RoleName = role(s"source1")
+  val targetNode1: RoleName = role(s"target1")
+  val targetNode2: RoleName = role(s"target2")
 
-  commonConfig(baseConfig)
-
-  val node1: RoleName = role(s"source")
-  val node2: RoleName = role(s"target")
-  val node3: RoleName = role(s"target")
-
-  nodeConfig(node1)(baseConfig)
-  nodeConfig(node2)(baseConfig)
-  nodeConfig(node3)(baseConfig)
-
-  def getLocalNodeClusterPort(node: RoleName): Int = {
+  def getLocalNodeRoles(node: RoleName): Seq[String] = {
     node match {
-      case x if x == node1 => 20001
-      case x if x == node2 => 20002
-      case x if x == node3 => 20003
+      case x if x == sourceNode => Seq("source")
+      case x if x == targetNode1 => Seq("target")
+      case x if x == targetNode2 => Seq("target")
     }
   }
 
-  testTransport(on = true)
+  var calls_total: Int = 0
+  var calls_startAudio: Int = 0
+  var calls_stopAudio: Int = 0
+  var calls_restartAudio: Int = 0
+  var calls_startTransport: Int = 0
+  var calls_stopTransport: Int = 0
+  var calls_restartTransport: Int = 0
+  var calls_stopApplication: Int = 0
+  var calls_restartApplication: Int = 0
+  var calls_stopHost: Int = 0
+  var calls_restartHost: Int = 0
+
+  val testHandlers: LocalHandlers = new LocalHandlers {
+    override def startAudio(formatContainer: Option[AudioFormatContainer]): Future[Boolean] = {
+      calls_total += 1
+      calls_startAudio += 1
+      Future.successful(true)
+    }
+
+    override def startTransport(): Future[Boolean] = {
+      calls_total += 1
+      calls_startTransport += 1
+      Future.successful(true)
+    }
+
+    override def stopApplication(restart: Boolean): Future[Boolean] = {
+      calls_total += 1
+      if (restart) calls_restartApplication += 1
+      else calls_stopApplication += 1
+
+      Future.successful(true)
+    }
+
+    override def stopAudio(restart: Boolean): Future[Boolean] = {
+      calls_total += 1
+      if (restart) calls_restartAudio += 1
+      else calls_stopAudio += 1
+
+      Future.successful(true)
+    }
+
+    override def stopHost(restart: Boolean): Future[Boolean] = {
+      calls_total += 1
+      if (restart) calls_restartHost += 1
+      else calls_stopHost += 1
+
+      Future.successful(true)
+    }
+
+    override def stopTransport(restart: Boolean): Future[Boolean] = {
+      calls_total += 1
+      if (restart) calls_restartTransport += 1
+      else calls_stopTransport += 1
+
+      Future.successful(true)
+    }
+  }
 }
 
 class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with UnitSpec {
@@ -59,5 +113,188 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with UnitSpec {
 
   import ServiceTestConfig._
 
-  //TODO
+  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+  implicit val timeout: Timeout = 5.seconds
+  val pingInterval: FiniteDuration = 3.seconds
+
+  var service: Service =
+    myself match {
+      case x if x == sourceNode =>
+        new SourceService(
+          systemName,
+          myself.name,
+          pingInterval,
+          testHandlers,
+          Some(
+            baseServiceConfig
+              .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(clusterPort))
+              .withValue("akka.cluster.roles", ConfigValueFactory.fromIterable(Seq("source").asJava))
+          )
+        )
+
+      case x if x == targetNode1 =>
+        new TargetService(
+          systemName,
+          myself.name,
+          testHandlers,
+          Some(
+            baseServiceConfig
+              .withValue("akka.cluster.roles", ConfigValueFactory.fromIterable(Seq("target").asJava))
+          )
+        )
+
+      case x if x == targetNode2 =>
+        new TargetService(
+          systemName,
+          myself.name,
+          testHandlers,
+          Some(
+            baseServiceConfig
+              .withValue("akka.cluster.roles", ConfigValueFactory.fromIterable(Seq("target").asJava))
+          )
+        )
+    }
+
+  enterBarrier("setup")
+
+  waitUntil(what = "all nodes are active", waitTimeMs = 1000, waitAttempts = 15) {
+    service.activeSources == 1 && service.activeTargets == (initialParticipants - 1)
+  }
+
+  enterBarrier("cluster-join")
+
+  "A cluster Service" should {
+    "successfully have targets accept commands from a source" in {
+      if (myself == sourceNode) {
+        val sourceService = service.asInstanceOf[SourceService]
+        sourceService.forwardMessage(targetNode1.name, Messages.StartAudio(None))
+        sourceService.forwardMessage(targetNode2.name, Messages.StopAudio(restart = false))
+        sourceService.forwardMessage(Messages.StopAudio(restart = true))
+        sourceService.forwardMessage(targetNode1.name, Messages.StartTransport())
+        sourceService.forwardMessage(targetNode2.name, Messages.StartTransport())
+        sourceService.forwardMessage(Messages.StopTransport(restart = true))
+        sourceService.forwardMessage(targetNode1.name, Messages.StopApplication(restart = false))
+        sourceService.forwardMessage(targetNode2.name, Messages.StopApplication(restart = true))
+        sourceService.forwardMessage(Messages.StopHost(restart = true))
+      }
+
+      runOn(targetNode1, targetNode2) {
+        waitUntil(what = "all messages have been processed", waitTimeMs = 1000, waitAttempts = 15) {
+          calls_total == 6
+        }
+      }
+
+      enterBarrier("post-test-setup-01")
+
+      myself match {
+        case x if x == sourceNode =>
+          calls_startAudio should be(1)
+          calls_stopAudio should be(0)
+          calls_restartAudio should be(0)
+          calls_startTransport should be(1)
+          calls_stopTransport should be(0)
+          calls_restartTransport should be(0)
+          calls_stopApplication should be(0)
+          calls_restartApplication should be(0)
+          calls_stopHost should be(0)
+          calls_restartHost should be(0)
+
+        case x if x == targetNode1 =>
+          calls_startAudio should be(1)
+          calls_stopAudio should be(0)
+          calls_restartAudio should be(1)
+          calls_startTransport should be(1)
+          calls_stopTransport should be(0)
+          calls_restartTransport should be(1)
+          calls_stopApplication should be(1)
+          calls_restartApplication should be(0)
+          calls_stopHost should be(0)
+          calls_restartHost should be(1)
+
+        case x if x == targetNode2 =>
+          calls_startAudio should be(0)
+          calls_stopAudio should be(1)
+          calls_restartAudio should be(1)
+          calls_startTransport should be(1)
+          calls_stopTransport should be(0)
+          calls_restartTransport should be(1)
+          calls_stopApplication should be(0)
+          calls_restartApplication should be(1)
+          calls_stopHost should be(0)
+          calls_restartHost should be(1)
+      }
+    }
+
+    "successfully have targets report to a source" in {
+      myself match {
+        case x if x == sourceNode =>
+          waitUntil(what = "a few status messages have been exchanged", waitTimeMs = 1000, waitAttempts = 15) {
+            service.asInstanceOf[SourceService].getClusterState.await.pongs >= 4
+          }
+
+          service.asInstanceOf[SourceService].getClusterState.map {
+            state =>
+              state.localSource.audio should be(ServiceState.Active)
+              state.localSource.transport should be(ServiceState.Active)
+              state.localSource.application should be(ServiceState.Active)
+              state.localSource.host should be(ServiceState.Active)
+
+              state.targets.keys should contain(s"$TargetActorNamePrefix${targetNode1.name}")
+              state.targets.keys should contain(s"$TargetActorNamePrefix${targetNode2.name}")
+
+              state.pings should be(state.pongs)
+          }
+
+        case x if x == targetNode1 => succeed
+
+        case x if x == targetNode2 => succeed
+      }
+    }
+
+    "stop sources from sending data when no targets are available" in {
+      enterBarrier("pre-test-03")
+
+      runOn(targetNode1, targetNode2) {
+        shutdown(system)
+      }
+
+      myself match {
+        case x if x == sourceNode =>
+          waitUntil(what = "all messages have been processed", waitTimeMs = 1000, waitAttempts = 15) {
+            calls_total == 4
+          }
+
+          calls_startAudio should be(1)
+          calls_stopAudio should be(1)
+          calls_restartAudio should be(0)
+          calls_startTransport should be(1)
+          calls_stopTransport should be(1)
+          calls_restartTransport should be(0)
+          calls_stopApplication should be(0)
+          calls_restartApplication should be(0)
+          calls_stopHost should be(0)
+          calls_restartHost should be(0)
+
+          service.asInstanceOf[SourceService].getClusterState.map {
+            state =>
+              state.localSource.audio should be(ServiceState.Stopped)
+              state.localSource.transport should be(ServiceState.Stopped)
+              state.localSource.application should be(ServiceState.Active)
+              state.localSource.host should be(ServiceState.Active)
+
+              state.targets.keys.size should be(0)
+          }
+
+        case x if x == targetNode1 => succeed
+
+        case x if x == targetNode2 => succeed
+      }
+    }
+  }
 }
+
+class ServiceMultiJvmSourceNode extends ServiceSpec
+
+class ServiceMultiJvmTargetNode1 extends ServiceSpec
+
+class ServiceMultiJvmTargetNode2 extends ServiceSpec

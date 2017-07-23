@@ -13,29 +13,27 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
-package noisecluster.control
+package noisecluster.audio
 
-package object cluster {
-  val SourceActorNamePrefix: String = "source_"
-  val TargetActorNamePrefix: String = "target_"
+import javax.sound.sampled.AudioFormat
 
-  case class NodeState(
-    audio: ServiceState,
-    transport: ServiceState,
-    application: ServiceState,
-    host: ServiceState
-  )
-
-  case class NodeInfo(
-    state: NodeState,
-    lastUpdate: java.time.LocalDateTime
-  )
-
-  case class ClusterState(
-    localSource: NodeState,
-    targets: Map[String, Option[NodeInfo]],
-    pings: Int,
-    pongs: Int
-  )
-
+case class AudioFormatContainer(
+  encoding: String,
+  sampleRate: Float,
+  sampleSizeInBits: Int,
+  channels: Int,
+  frameSize: Int,
+  frameRate: Float,
+  bigEndian: Boolean
+) {
+  def toAudioFormat: AudioFormat =
+    new AudioFormat(
+      new AudioFormat.Encoding(encoding),
+      sampleRate,
+      sampleSizeInBits,
+      channels,
+      frameSize,
+      frameRate,
+      bigEndian
+    )
 }

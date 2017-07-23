@@ -13,29 +13,19 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
-package noisecluster.control
+package noisecluster.control.cluster
 
-package object cluster {
-  val SourceActorNamePrefix: String = "source_"
-  val TargetActorNamePrefix: String = "target_"
+import akka.actor.ActorRef
+import com.typesafe.config.Config
+import noisecluster.control.LocalHandlers
 
-  case class NodeState(
-    audio: ServiceState,
-    transport: ServiceState,
-    application: ServiceState,
-    host: ServiceState
-  )
+import scala.concurrent.ExecutionContext
 
-  case class NodeInfo(
-    state: NodeState,
-    lastUpdate: java.time.LocalDateTime
-  )
-
-  case class ClusterState(
-    localSource: NodeState,
-    targets: Map[String, Option[NodeInfo]],
-    pings: Int,
-    pongs: Int
-  )
-
+class TargetService(
+  private val systemName: String,
+  private val messengerName: String,
+  private val handlers: LocalHandlers,
+  private val overrideConfig: Option[Config] = None
+)(implicit ec: ExecutionContext) extends Service(systemName, overrideConfig) {
+  override protected val messenger: ActorRef = system.actorOf(TargetMessenger.props(handlers), s"$TargetActorNamePrefix$messengerName")
 }

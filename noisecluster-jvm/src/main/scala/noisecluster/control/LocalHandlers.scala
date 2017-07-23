@@ -15,13 +15,20 @@
   */
 package noisecluster.control
 
+import noisecluster.audio.AudioFormatContainer
+
 import scala.concurrent.Future
 
 trait LocalHandlers {
   def startAudio(formatContainer: Option[AudioFormatContainer]): Future[Boolean]
+
   def stopAudio(restart: Boolean): Future[Boolean]
+
   def startTransport(): Future[Boolean]
+
   def stopTransport(restart: Boolean): Future[Boolean]
+
   def stopApplication(restart: Boolean): Future[Boolean]
+
   def stopHost(restart: Boolean): Future[Boolean]
 }

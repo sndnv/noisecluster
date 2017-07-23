@@ -17,25 +17,26 @@ package noisecluster.control.cluster
 
 import java.time.LocalDateTime
 
-import akka.pattern.{ask, pipe}
 import akka.actor.{Address, Props}
 import akka.cluster.MemberStatus
 import akka.cluster.ClusterEvent._
 import akka.cluster.pubsub.DistributedPubSubMediator._
-import akka.util.Timeout
 import noisecluster.control._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import scala.util.control.NonFatal
 
-class SourceMessenger(private val pingInterval: FiniteDuration)(implicit ec: ExecutionContext, timeout: Timeout) extends Messenger {
+class SourceMessenger(
+  private val pingInterval: FiniteDuration,
+  private val localHandlers: LocalHandlers
+)(implicit ec: ExecutionContext) extends Messenger(localHandlers) {
   private var targets = Map.empty[String, Option[NodeInfo]]
   private var targetsByAddress = Map.empty[Address, String]
   private var pingsSent: Int = 0
   private var pongsReceived: Int = 0
+  private var audioStoppedBySystem: Boolean = true
 
-  context.system.scheduler.schedule(pingInterval, pingInterval) {
+  private val pingSchedule = context.system.scheduler.schedule(pingInterval, pingInterval) {
     targets.keys.foreach {
       targetName =>
         mediatorRef ! Send(s"/user/$targetName", Messages.Ping(), localAffinity = false)
@@ -43,30 +44,30 @@ class SourceMessenger(private val pingInterval: FiniteDuration)(implicit ec: Exe
     }
   }
 
-  override def receive: Receive = {
+  override def postStop(): Unit = {
+    pingSchedule.cancel()
+    super.postStop()
+  }
+
+  addReceiver {
     case SourceMessenger.ForwardMessage(target, message) =>
       target match {
         case Some(targetName) =>
           if (targets.contains(targetName)) {
-            (mediatorRef ? Send(s"/user/$targetName", message, localAffinity = false)).mapTo[Boolean] pipeTo sender
+            mediatorRef ! Send(s"/user/$targetName", message, localAffinity = false)
           } else {
-            val logMessage = s"Failed to send message [$message] to unregistered target node [$targetName]"
-            log.error(logMessage)
-            sender ! Future.failed(new RuntimeException(logMessage))
+            log.error("Failed to send message [{}] to unregistered target node [{}]", message, targetName)
           }
 
         case None =>
-          Future.sequence(
-            targets.keys.map {
-              targetName =>
-                (mediatorRef ? Send(s"/user/$targetName", message, localAffinity = false)).mapTo[Boolean].recover {
-                  case NonFatal(e) =>
-                    log.error("Target [{}] responded with exception to message [{}]: [{}]", targetName, message, e)
-                    false
-                }
-            }
-          ).map(_.forall(identity)) pipeTo sender
+          targets.keys.foreach {
+            targetName =>
+              mediatorRef ! Send(s"/user/$targetName", message, localAffinity = false)
+          }
       }
+
+    case SourceMessenger.GetClusterState() =>
+      sender ! ClusterState(getLocalState, targets, pingsSent, pongsReceived)
 
     //Cluster Management
     case CurrentClusterState(existingMembers, _, _, _, _) =>
@@ -89,12 +90,18 @@ class SourceMessenger(private val pingInterval: FiniteDuration)(implicit ec: Exe
         val targetAddress = member.address
         val targetName = targetsByAddress(targetAddress)
 
-        if(!targets.contains(targetName)) {
+        if (!targets.contains(targetName)) {
           log.warning("Received [MemberRemoved] event for unregistered target node [{}]", targetName)
         }
         else {
           targets -= targetName
           targetsByAddress -= targetAddress
+
+          if (targets.isEmpty) {
+            self ! Messages.StopTransport(restart = false)
+            self ! Messages.StopAudio(restart = false)
+            audioStoppedBySystem = true
+          }
         }
       }
 
@@ -102,18 +109,26 @@ class SourceMessenger(private val pingInterval: FiniteDuration)(implicit ec: Exe
       val targetName = sender.path.name
       val targetAddress = sender.path.address
 
-      if(targets.contains(targetName)) {
+      if (targets.contains(targetName)) {
         log.warning("Registration message received for already registered target node [{}] with address [{}]", targetName, targetAddress)
       }
       else {
         targets += targetName -> None
         targetsByAddress += targetAddress -> targetName
         log.info("Registered target [{}] with address [{}]", targetName, targetAddress)
+
+        if (targets.size == 1) {
+          if (audioStoppedBySystem) {
+            self ! Messages.StartAudio(None)
+            self ! Messages.StartTransport()
+            audioStoppedBySystem = false
+          }
+        }
       }
 
     case message: Messages.Pong =>
       val targetName = sender.path.name
-      if(targets.contains(targetName)) {
+      if (targets.contains(targetName)) {
         targets += targetName -> Some(NodeInfo(message.state, LocalDateTime.now()))
         pongsReceived += 1
         log.debug("Received state update [{}] from target [{}] with address [{}]", message, targetName, sender.path.address)
@@ -124,7 +139,10 @@ class SourceMessenger(private val pingInterval: FiniteDuration)(implicit ec: Exe
 }
 
 object SourceMessenger {
+
   case class ForwardMessage(target: Option[String], message: Messages.ControlMessage)
 
-  def props(pingInterval: FiniteDuration)(implicit ec: ExecutionContext, timeout: Timeout): Props = Props(classOf[SourceMessenger], pingInterval, ec, timeout)
+  case class GetClusterState()
+
+  def props(pingInterval: FiniteDuration, localHandlers: LocalHandlers)(implicit ec: ExecutionContext): Props = Props(classOf[SourceMessenger], pingInterval, localHandlers, ec)
 }
