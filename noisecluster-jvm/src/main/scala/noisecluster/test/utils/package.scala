@@ -13,12 +13,12 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
-package noisecluster_multi_jvm.test
+package noisecluster.test
 
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 package object utils {
   /**
@@ -41,7 +41,7 @@ package object utils {
     }
 
     if (!f && remainingAttempts <= 1) {
-      throw new RuntimeException(s"Waiting until [$what] failed after [$waitAttempts] attempts.")
+      throw new RuntimeException(s"Waiting until [$what] failed after [$waitAttempts] attempts")
     }
   }
 
@@ -63,7 +63,7 @@ package object utils {
         case Some(Success(t)) => t
         case Some(Failure(e)) => if (printTrace) e.printStackTrace(); throw e
         case _ => throw new IllegalStateException(
-          s"noisecluster_multi_jvm.test.utils.ExtendedAwaitable::await > Failed to wait for future [$self] with duration [$waitDuration]."
+          s"noisecluster_multi_jvm.test.utils.ExtendedAwaitable::await > Failed to wait for future [$self] with duration [$waitDuration]"
         )
       }
     }
@@ -85,4 +85,5 @@ package object utils {
         }
     }
   }
+
 }

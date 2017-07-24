@@ -22,8 +22,9 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import noisecluster.audio.AudioFormatContainer
 import noisecluster.control.cluster._
 import noisecluster.control.{LocalHandlers, ServiceState}
-import noisecluster_multi_jvm.test.specs.UnitSpec
-import noisecluster_multi_jvm.test.utils._
+import noisecluster.test.utils._
+import org.scalatest.concurrent.Eventually
+import org.scalatest.{AsyncWordSpecLike, Matchers}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -108,16 +109,16 @@ object ServiceTestConfig extends MultiNodeConfig {
   }
 }
 
-class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with UnitSpec {
+class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLike with Matchers with Eventually {
   override def initialParticipants: Int = roles.size
 
   import ServiceTestConfig._
 
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-  implicit val timeout: Timeout = 5.seconds
-  val pingInterval: FiniteDuration = 3.seconds
+  private implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+  private implicit val timeout: Timeout = 5.seconds
+  private val pingInterval: FiniteDuration = 3.seconds
 
-  var service: Service =
+  private val service: Service =
     myself match {
       case x if x == sourceNode =>
         new SourceService(

@@ -18,8 +18,8 @@ package noisecluster.control.cluster
 import java.time.LocalDateTime
 
 import akka.actor.{Address, Props}
-import akka.cluster.MemberStatus
 import akka.cluster.ClusterEvent._
+import akka.cluster.MemberStatus
 import akka.cluster.pubsub.DistributedPubSubMediator._
 import noisecluster.control._
 

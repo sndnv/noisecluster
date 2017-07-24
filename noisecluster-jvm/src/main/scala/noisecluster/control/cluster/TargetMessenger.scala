@@ -16,8 +16,8 @@
 package noisecluster.control.cluster
 
 import akka.actor.{Address, Props}
-import noisecluster.control.cluster.Messages.{Pong, RegisterTarget}
 import noisecluster.control._
+import noisecluster.control.cluster.Messages.{Pong, RegisterTarget}
 
 import scala.concurrent.ExecutionContext
 
