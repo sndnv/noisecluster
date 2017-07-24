@@ -17,8 +17,6 @@ package noisecluster.audio
 
 import javax.sound.sampled.AudioFormat
 
-object Formats {
-  //TODO - or default @ 48k, 24 bit, 2 chan, signed, LE
-  val Default: AudioFormat = new AudioFormat(48000, 16, 2, true, false) //TODO - default ?
-  val DefaultIeee: AudioFormat = new AudioFormat(48000, 32, 2, true, false) //TODO - works?
+object Defaults {
+  val WasapiAudioFormat: AudioFormat = new AudioFormat(48000, 16, 2, true, false)
 }

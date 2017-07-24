@@ -83,7 +83,7 @@ class Target(
       aeron.close()
       log.info("Closed transport for channel [{}] and stream [{}]", channel, stream)
     } else {
-      val message = s"Cannot close transport for channel $channel] and stream [$stream]; transport is still active"
+      val message = s"Cannot close transport for channel [$channel] and stream [$stream]; transport is still active"
       log.warning(message)
       throw new IllegalStateException(message)
     }

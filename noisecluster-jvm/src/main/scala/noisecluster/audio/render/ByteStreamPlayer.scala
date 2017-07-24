@@ -15,56 +15,78 @@
   */
 package noisecluster.audio.render
 
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.sound.sampled.{AudioFormat, AudioSystem, DataLine, SourceDataLine}
 
-import noisecluster.audio.{Buffers, Formats}
-
-//TODO - warn about buffer size from 'open' method
-//TODO - catch exceptions
-//TODO - make async ? (impacts performance/latency ?)
+import akka.actor.ActorSystem
+import akka.event.Logging
 
 class ByteStreamPlayer(
-  val lineBufferSize: Int,   //in bytes
-  val format: AudioFormat
-) {
+  private val format: AudioFormat,
+  private val lineBufferSize: Option[Int]
+)(implicit loggingActorSystem: ActorSystem) {
+  private val isRunning = new AtomicBoolean(false)
+  private val log = Logging.getLogger(loggingActorSystem, this)
   private val lineInfo = new DataLine.Info(classOf[SourceDataLine], format)
   private val line = AudioSystem.getLine(lineInfo).asInstanceOf[SourceDataLine]
-  line.open(format, lineBufferSize)
 
-  //TODO - warn about blocking or make async
-  def enqueueData(data: Array[Byte], length: Int): Unit = {
+  lineBufferSize match {
+    case Some(bufferSize) => line.open(format, bufferSize)
+    case None => line.open(format)
+  }
+
+  def isActive: Boolean = isRunning.get
+
+  //docs - warn about blocking
+  def write(data: Array[Byte], length: Int): Int = {
     line.write(data, 0, length)
   }
 
-  //TODO - warn about blocking or make async
-  def enqueueData(data: Array[Byte]): Unit = {
-    enqueueData(data, data.length)
+  //docs - warn about discarding data
+  def writeNonBlocking(data: Array[Byte], length: Int): Int = {
+    line.write(data, 0, length.min(line.available))
   }
 
   def start(): Unit = {
-    line.start()
+    if (isRunning.compareAndSet(false, true)) {
+      log.info("Starting audio rendering for line [{}]", lineInfo)
+      line.flush()
+      line.start()
+    } else {
+      val message = s"Cannot start audio rendering for line [$lineInfo]; audio is already active"
+      log.warning(message)
+      throw new IllegalStateException(message)
+    }
   }
 
-  //TODO - warn about blocking
   def stop(): Unit = {
-    line.drain()
-    line.stop()
-    line.close()
+    if (isRunning.compareAndSet(true, false)) {
+      log.info("Stopping audio rendering for line [{}]", line)
+      line.stop()
+    } else {
+      val message = s"Cannot stop audio rendering for line [$line]; rendering is not active"
+      log.warning(message)
+      throw new IllegalStateException(message)
+    }
   }
 
-  def pause(): Unit = {
-    line.stop()
-  }
-
-  def resume(): Unit = {
-    line.flush()
-    line.start()
+  def close(): Unit = {
+    if (!isRunning.get) {
+      log.info("Closing audio rendering for line [{}]", line)
+      line.close()
+      log.info("Closed audio rendering for line [{}]", line)
+    } else {
+      val message = s"Cannot close audio rendering for line [$line]; rendering is still active"
+      log.warning(message)
+      throw new IllegalStateException(message)
+    }
   }
 }
 
 object ByteStreamPlayer {
-  def apply(lineBufferSize: Int, format: AudioFormat): ByteStreamPlayer = new ByteStreamPlayer(lineBufferSize, format)
-  def apply(lineBufferSize: Int): ByteStreamPlayer = new ByteStreamPlayer(lineBufferSize, Formats.Default)
-  def apply(format: AudioFormat): ByteStreamPlayer = new ByteStreamPlayer(Buffers.DefaultLineBufferSize, format)
-  def apply(): ByteStreamPlayer = new ByteStreamPlayer(Buffers.DefaultLineBufferSize, Formats.Default)
+  def apply(format: AudioFormat)(implicit loggingActorSystem: ActorSystem): ByteStreamPlayer =
+    new ByteStreamPlayer(format, None)
+
+  def apply(format: AudioFormat, lineBufferSize: Int)(implicit loggingActorSystem: ActorSystem): ByteStreamPlayer =
+    new ByteStreamPlayer(format, Some(lineBufferSize))
 }
