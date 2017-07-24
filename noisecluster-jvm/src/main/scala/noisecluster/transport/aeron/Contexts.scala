@@ -16,13 +16,13 @@
 package noisecluster.transport.aeron
 
 import io.aeron.Aeron
-import io.aeron.driver.MediaDriver
-import io.aeron.driver.ThreadingMode
+import io.aeron.driver.{MediaDriver, ThreadingMode}
 import org.agrona.concurrent.BusySpinIdleStrategy
 
 object Contexts {
+
   object Driver {
-    //TODO - from https://github.com/real-logic/aeron/blob/master/aeron-samples/src/main/java/io/aeron/samples/LowLatencyMediaDriver.java
+    //docs - taken from https://github.com/real-logic/aeron/blob/master/aeron-samples/src/main/java/io/aeron/samples/LowLatencyMediaDriver.java
     def lowLatency: MediaDriver.Context = {
       new MediaDriver.Context()
         .termBufferSparseFile(false)
@@ -43,4 +43,5 @@ object Contexts {
       new Aeron.Context
     }
   }
+
 }

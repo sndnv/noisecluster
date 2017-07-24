@@ -15,6 +15,25 @@
   */
 package noisecluster.transport.aeron
 
-object FragmentLimits {
-  val default: Int = 10 //TODO - default?
+import java.util.concurrent.TimeUnit
+
+import io.aeron.Aeron
+import io.aeron.driver.MediaDriver
+import org.agrona.concurrent.{BackoffIdleStrategy, IdleStrategy}
+
+object Defaults {
+  val IdleStrategy: IdleStrategy = new BackoffIdleStrategy(
+    100, //max spins
+    10, //max yields
+    TimeUnit.MICROSECONDS.toNanos(1), //min park period (ns)
+    TimeUnit.MICROSECONDS.toNanos(100) //max park period (ns)
+  )
+
+  val FragmentLimit: Int = 10
+
+  val BufferSize: Int = 4096
+
+  val getNewDriverContext: MediaDriver.Context = Contexts.Driver.default
+
+  val getNewSystemContext: Aeron.Context = Contexts.System.default
 }

@@ -17,21 +17,23 @@ package noisecluster.transport.aeron
 
 import java.util.concurrent.atomic.AtomicBoolean
 
+import akka.actor.ActorSystem
+import akka.event.Logging
 import io.aeron._
 import io.aeron.logbuffer._
 import org.agrona.DirectBuffer
 import org.agrona.concurrent._
 
-//TODO - logging
 class Target(
   private val stream: Int,
-  private val aeronChannel: String,
-  private val context: Aeron.Context,
+  private val channel: String,
   private val dataHandler: (Array[Byte], Int) => Unit,
   private val idleStrategy: IdleStrategy,
   private val fragmentLimit: Int
-) {
+)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) {
   private val isRunning = new AtomicBoolean(false)
+  private val log = Logging.getLogger(loggingActorSystem, this)
+  private val subscription = aeron.addSubscription(channel, stream)
 
   private val fragmentHandler = new FragmentHandler {
     override def onFragment(buffer: DirectBuffer, offset: Int, length: Int, header: Header): Unit = {
@@ -43,38 +45,47 @@ class Target(
 
   private val fragmentAssembler = new FragmentAssembler(fragmentHandler)
 
-  private val aeron = Aeron.connect(context)
-  private val subscription = aeron.addSubscription(aeronChannel, stream)
+  def isActive: Boolean = isRunning.get
 
-  //TODO - warn about blocking
+  //docs - warn about blocking
   def start(): Unit = {
-    if(isRunning.compareAndSet(false, true)) {
-      //TODO - log
-      while(isRunning.get) {
+    if (isRunning.compareAndSet(false, true)) {
+      log.info("Starting transport for channel [{}] and stream [{}]", channel, stream)
+
+      //will block until stopped
+      while (isRunning.get) {
         val fragmentsRead = subscription.poll(fragmentAssembler, fragmentLimit)
         idleStrategy.idle(fragmentsRead)
       }
-      //TODO - log
+
+      log.info("Stopped transport for channel [{}] and stream [{}]", channel, stream)
     } else {
-      //TODO - log warning - is already running
+      val message = s"Cannot start transport for channel [$channel] and stream [$stream]; transport is already active"
+      log.warning(message)
+      throw new IllegalStateException(message)
     }
   }
 
   def stop(): Unit = {
-    //TODO
-    if(isRunning.compareAndSet(true, false)) {
-      //TODO - ?
+    if (isRunning.compareAndSet(true, false)) {
+      log.info("Stopping transport for channel [{}] and stream [{}]", channel, stream)
     } else {
-      //TODO - log warning - is not running
+      val message = s"Cannot stop transport for channel [$channel] and stream [$stream]; transport is not active"
+      log.warning(message)
+      throw new IllegalStateException(message)
     }
   }
 
   def close(): Unit = {
-    if(isRunning.get) {
+    if (!isRunning.get) {
+      log.info("Closing transport for channel [{}] and stream [{}]", channel, stream)
       subscription.close()
       aeron.close()
+      log.info("Closed transport for channel [{}] and stream [{}]", channel, stream)
     } else {
-      //TODO - log error - is running
+      val message = s"Cannot close transport for channel $channel] and stream [$stream]; transport is still active"
+      log.warning(message)
+      throw new IllegalStateException(message)
     }
   }
 }
@@ -84,40 +95,62 @@ object Target {
     stream: Int,
     address: String,
     port: Int,
-    context: Aeron.Context,
     dataHandler: (Array[Byte], Int) => Unit,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  ): Target = new Target(stream, s"aeron:udp?endpoint=$address:$port", context, dataHandler, idleStrategy, fragmentLimit)
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
+    new Target(
+      stream,
+      s"aeron:udp?endpoint=$address:$port",
+      dataHandler,
+      idleStrategy,
+      fragmentLimit
+    )
 
   def apply(
     stream: Int,
     address: String,
     port: Int,
     interface: String,
-    context: Aeron.Context,
     dataHandler: (Array[Byte], Int) => Unit,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  ): Target = new Target(stream, s"aeron:udp?endpoint=$address:$port|interface=$interface", context, dataHandler, idleStrategy, fragmentLimit)
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
+    new Target(
+      stream,
+      s"aeron:udp?endpoint=$address:$port|interface=$interface",
+      dataHandler,
+      idleStrategy,
+      fragmentLimit
+    )
 
   def apply(
     stream: Int,
-    aeronChannel: String,
-    context: Aeron.Context,
+    channel: String,
     dataHandler: (Array[Byte], Int) => Unit,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  ): Target = new Target(stream, aeronChannel, context, dataHandler, idleStrategy, fragmentLimit)
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
+    new Target(
+      stream,
+      channel,
+      dataHandler,
+      idleStrategy,
+      fragmentLimit
+    )
 
-  def apply(stream: Int, address: String, port: Int, dataHandler: (Array[Byte], Int) => Unit): Target =
+  def apply(
+    stream: Int,
+    address: String,
+    port: Int,
+    dataHandler: (Array[Byte], Int) => Unit
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
     Target(
       stream,
       address,
       port,
-      Contexts.System.default,
       dataHandler,
-      IdleStrategies.default,
-      FragmentLimits.default
+      Defaults.IdleStrategy,
+      Defaults.FragmentLimit
     )
 }
