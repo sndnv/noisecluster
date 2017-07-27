@@ -17,6 +17,7 @@
 using System;
 using System.Threading.Tasks;
 using Adaptive.Aeron;
+using log4net.Config;
 using noisecluster.transport.aeron;
 using NUnit.Framework;
 
@@ -42,6 +43,7 @@ namespace noisecluster.test.transport.aeron
 
         public BasicSpec()
         {
+            BasicConfigurator.Configure();
             _testDataSent = 0;
             _testDataReceived = 0;
 
