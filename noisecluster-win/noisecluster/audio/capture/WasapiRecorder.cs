@@ -19,7 +19,9 @@ using CSCore.Streams;
 
 namespace noisecluster.audio.capture
 {
+    public class WasapiRecorder //TODO - make disposable?
     {
+        private bool isRunning = false; //TODO - atomic?
         private WasapiCapture capture;
         private SoundInSource soundInSource;
         private IWaveSource convertedSource;
