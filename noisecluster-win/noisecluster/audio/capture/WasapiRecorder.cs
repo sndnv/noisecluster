@@ -13,68 +13,133 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
+
+using System;
+using System.Threading;
 using CSCore;
 using CSCore.SoundIn;
 using CSCore.Streams;
+using log4net;
 
 namespace noisecluster.audio.capture
 {
-    public class WasapiRecorder //TODO - make disposable?
+    public class WasapiRecorder
     {
-        private bool isRunning = false; //TODO - atomic?
-        private WasapiCapture capture;
-        private SoundInSource soundInSource;
-        private IWaveSource convertedSource;
-        private WasapiDataHandler dataHandler;
-        private byte[] dataBuffer;
+        private readonly ILog _log = LogManager.GetLogger(typeof(WasapiRecorder));
+        private int _isRunning; //0 = false; 1 = true
+        private bool _hasHandler;
+        private readonly WasapiCapture _capture;
+        private readonly SoundInSource _soundInSource;
+        private readonly IWaveSource _convertedSource;
 
-        public WasapiRecorder(WasapiDataHandler handler)
+        public delegate void DataHandler(byte[] data, int length);
+
+        public WasapiRecorder(DataHandler handler = null)
         {
-            capture = new WasapiLoopbackCapture();
-            capture.Initialize();
+            _capture = new WasapiLoopbackCapture();
+            _capture.Initialize();
 
-            soundInSource = new SoundInSource(capture) {FillWithZeros = false};
+            _soundInSource = new SoundInSource(_capture) {FillWithZeros = false};
 
-            convertedSource = soundInSource
-                //.ChangeSampleRate(48000) //TODO - ?
+            _convertedSource = _soundInSource
                 .ToSampleSource()
-                .ToWaveSource(16) //TODO - ?
+                .ToWaveSource(16)
                 .ToStereo();
 
-            dataHandler = handler;
+            WithDataHandler(handler);
+        }
 
-            dataBuffer = new byte[convertedSource.WaveFormat.BytesPerSecond];
-
-            soundInSource.DataAvailable += (sender, e) =>
+        public void WithDataHandler(DataHandler handler)
+        {
+            if (handler != null)
             {
-                int read, total = 0;
-
-                while ((read = convertedSource.Read(dataBuffer, 0, dataBuffer.Length)) > 0)
+                _soundInSource.DataAvailable += (s, e) =>
                 {
-                    total += read;
-                }
+                    var buffer = new byte[_convertedSource.WaveFormat.BytesPerSecond];
+                    int bytesRead, bytesTotal = 0;
 
-                dataHandler(dataBuffer, total); //TODO - safe to pass byte[] ?
-            };
+                    while ((bytesRead = _convertedSource.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        bytesTotal += bytesRead;
+                    }
+
+                    handler(buffer, bytesTotal);
+                };
+
+                _hasHandler = true;
+            }
+            else
+            {
+                throw new ArgumentException("Cannot attach null handler");
+            }
+        }
+
+        public WaveFormat SourceFormat
+        {
+            get { return _soundInSource.WaveFormat; }
+        }
+
+        public WaveFormat TargetFormat
+        {
+            get { return _convertedSource.WaveFormat; }
         }
 
         public bool IsActive
         {
-            get { return true; } //TODO
+            get { return _isRunning == 1; }
         }
 
         public void Start()
         {
-            //TODO - log
-            capture.Start();
+            if (_hasHandler)
+            {
+                if (Interlocked.CompareExchange(ref _isRunning, 1, 0) == 0)
+                {
+                    _log.InfoFormat(
+                        "Starting audio capture with formats [{0}] -> [{1}]",
+                        _soundInSource.WaveFormat,
+                        _convertedSource.WaveFormat
+                    );
+                    _capture.Start();
+                }
+                else
+                {
+                    var message = string.Format(
+                        "Cannot start audio capture with formats [{0}] -> [{1}]; capture is already active",
+                        _soundInSource.WaveFormat,
+                        _convertedSource.WaveFormat
+                    );
+                    _log.Warn(message);
+                    throw new InvalidOperationException(message);
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException("Cannot start capture without at least one data handler");
+            }
         }
 
         public void Stop()
         {
-            //TODO - log
-            capture.Stop();
+            if (Interlocked.CompareExchange(ref _isRunning, 0, 1) == 1)
+            {
+                _log.InfoFormat(
+                    "Stopping audio capture with formats [{0}] -> [{1}]",
+                    _soundInSource.WaveFormat,
+                    _convertedSource.WaveFormat
+                );
+                _capture.Stop();
+            }
+            else
+            {
+                var message = string.Format(
+                    "Cannot stop audio capture with formats [{0}] -> [{1}]; capture is already active",
+                    _soundInSource.WaveFormat,
+                    _convertedSource.WaveFormat
+                );
+                _log.Warn(message);
+                throw new InvalidOperationException(message);
+            }
         }
-
-        public delegate void WasapiDataHandler(byte[] data, int length);
     }
 }
