@@ -80,7 +80,6 @@ class Target(
     if (!isRunning.get) {
       log.info("Closing transport for channel [{}] and stream [{}]", channel, stream)
       subscription.close()
-      aeron.close()
       log.info("Closed transport for channel [{}] and stream [{}]", channel, stream)
     } else {
       val message = s"Cannot close transport for channel [$channel] and stream [$stream]; transport is still active"

@@ -125,19 +125,8 @@ class BasicSpec extends FlatSpec with Matchers {
     target.isActive should be(false)
   }
 
-  "A source" should "fail to send more data over a closed connection" in {
-    assertThrows[IllegalStateException] {
-      val bytes = Array.ofDim[Byte](testByteArraySize)
-      Random.nextBytes(bytes)
-      source.send(bytes)
-    }
-
-    assertThrows[IllegalStateException] {
-      source.close()
-    }
-  }
-
-  "A driver" should "successfully close" in {
+  "A system" should "successfully terminate" in {
+    aeron.close()
     driver.close()
   }
 }

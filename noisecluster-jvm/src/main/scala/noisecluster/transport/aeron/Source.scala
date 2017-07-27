@@ -92,7 +92,6 @@ class Source(
     if (!publication.isClosed) {
       log.info("Closing transport for channel [{}] and stream [{}]", channel, stream)
       publication.close()
-      aeron.close()
       log.info("Closed transport for channel [{}] and stream [{}]", channel, stream)
     } else {
       val message = s"Cannot close transport for channel [$channel] and stream [$stream]; transport is already closed"
