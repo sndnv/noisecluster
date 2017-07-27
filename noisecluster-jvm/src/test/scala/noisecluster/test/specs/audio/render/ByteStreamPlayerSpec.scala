@@ -16,8 +16,8 @@
 package noisecluster.test.specs.audio.render
 
 import akka.actor.ActorSystem
-import noisecluster.audio.Defaults
-import noisecluster.audio.render.ByteStreamPlayer
+import noisecluster.jvm.audio.Defaults
+import noisecluster.jvm.audio.render.ByteStreamPlayer
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.ExecutionContext

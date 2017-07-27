@@ -54,16 +54,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="audio\capture\WasapiRecorder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="test\transport\aeron\BasicSpec.cs" />
-    <Compile Include="test\Utils.cs" />
-    <Compile Include="transport\aeron\Defaults.cs" />
-    <Compile Include="transport\aeron\Source.cs" />
-    <Compile Include="transport\aeron\Target.cs" />
+    <Compile Include="win\audio\capture\WasapiRecorder.cs" />
+    <Compile Include="win\test\transport\aeron\BasicSpec.cs" />
+    <Compile Include="win\test\Utils.cs" />
+    <Compile Include="win\transport\aeron\Defaults.cs" />
+    <Compile Include="win\transport\aeron\Source.cs" />
+    <Compile Include="win\transport\aeron\Target.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="win" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

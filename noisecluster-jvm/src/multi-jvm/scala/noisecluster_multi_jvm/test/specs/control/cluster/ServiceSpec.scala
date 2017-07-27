@@ -19,10 +19,10 @@ import akka.remote.testconductor.RoleName
 import akka.remote.testkit._
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
-import noisecluster.audio.AudioFormatContainer
-import noisecluster.control.cluster._
-import noisecluster.control.{LocalHandlers, ServiceState}
-import noisecluster.test.utils._
+import noisecluster.jvm.audio.AudioFormatContainer
+import noisecluster.jvm.control.cluster._
+import noisecluster.jvm.control.{LocalHandlers, ServiceState}
+import noisecluster.jvm.test.utils._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{AsyncWordSpecLike, Matchers}
 

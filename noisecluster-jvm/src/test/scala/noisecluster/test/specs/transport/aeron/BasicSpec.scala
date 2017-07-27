@@ -18,8 +18,8 @@ package noisecluster.test.specs.transport.aeron
 import akka.actor.ActorSystem
 import io.aeron.Aeron
 import io.aeron.driver.MediaDriver
-import noisecluster.test.utils._
-import noisecluster.transport.aeron.{Defaults, Source, Target}
+import noisecluster.jvm.test.utils._
+import noisecluster.jvm.transport.aeron.{Defaults, Source, Target}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.{ExecutionContext, Future}
