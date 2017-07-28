@@ -22,7 +22,7 @@ using log4net;
 
 namespace noisecluster.win.transport.aeron
 {
-    public class Target
+    public class Target : IDisposable
     {
         private readonly ILog _log = LogManager.GetLogger(typeof(Target));
         private int _isRunning; //0 = false; 1 = true
@@ -128,6 +128,11 @@ namespace noisecluster.win.transport.aeron
                 _log.Warn(message);
                 throw new InvalidOperationException(message);
             }
+        }
+
+        public void Dispose()
+        {
+            _subscription.Dispose();
         }
     }
 }

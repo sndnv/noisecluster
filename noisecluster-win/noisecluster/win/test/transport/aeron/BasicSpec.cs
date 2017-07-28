@@ -132,5 +132,13 @@ namespace noisecluster.win.test.transport.aeron
             _target.Close();
             Assert.IsFalse(_target.IsActive);
         }
+
+        [Test]
+        public void T06_System_should_DisposeOfTransportObjects()
+        {
+            _source.Dispose();
+            _target.Dispose();
+            _aeron.Dispose();
+        }
     }
 }

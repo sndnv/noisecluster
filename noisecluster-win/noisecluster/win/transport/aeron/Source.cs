@@ -22,7 +22,7 @@ using log4net;
 
 namespace noisecluster.win.transport.aeron
 {
-    public class Source
+    public class Source : IDisposable
     {
         private readonly ILog _log = LogManager.GetLogger(typeof(Source));
         private readonly int _stream;
@@ -156,6 +156,7 @@ namespace noisecluster.win.transport.aeron
             {
                 _log.InfoFormat("Closing transport for channel [{0}] and stream [{1}]", _channel, _stream);
                 _publication.Dispose();
+                _buffer.Dispose();
                 _log.InfoFormat("Closed transport for channel [{0}] and stream [{1}]", _channel, _stream);
             }
             else
@@ -168,6 +169,15 @@ namespace noisecluster.win.transport.aeron
 
                 _log.Warn(message);
                 throw new InvalidOperationException(message);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (!_publication.IsClosed)
+            {
+                _publication.Dispose();
+                _buffer.Dispose();
             }
         }
     }

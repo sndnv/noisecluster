@@ -23,7 +23,7 @@ using log4net;
 
 namespace noisecluster.win.audio.capture
 {
-    public class WasapiRecorder
+    public class WasapiRecorder : IDisposable
     {
         private readonly ILog _log = LogManager.GetLogger(typeof(WasapiRecorder));
         private int _isRunning; //0 = false; 1 = true
@@ -133,13 +133,22 @@ namespace noisecluster.win.audio.capture
             else
             {
                 var message = string.Format(
-                    "Cannot stop audio capture with formats [{0}] -> [{1}]; capture is already active",
+                    "Cannot stop audio capture with formats [{0}] -> [{1}]; capture is not active",
                     _soundInSource.WaveFormat,
                     _convertedSource.WaveFormat
                 );
                 _log.Warn(message);
                 throw new InvalidOperationException(message);
             }
+        }
+
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref _isRunning, 0);
+            _capture.Stop();
+            _convertedSource.Dispose();
+            _soundInSource.Dispose();
+            _capture.Dispose();
         }
     }
 }
