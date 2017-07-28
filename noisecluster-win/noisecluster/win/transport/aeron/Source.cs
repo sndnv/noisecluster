@@ -48,11 +48,11 @@ namespace noisecluster.win.transport.aeron
         {
         }
 
-        public Source(Aeron aeron, int stream, string address, int port, string _interface, int bufferSize)
+        public Source(Aeron aeron, int stream, string address, int port, string @interface, int bufferSize)
             : this(
                 aeron,
                 stream,
-                string.Format("aeron:udp?endpoint={0}:{1}|interface={2}", address, port, _interface),
+                string.Format("aeron:udp?endpoint={0}:{1}|interface={2}", address, port, @interface),
                 bufferSize
             )
         {
