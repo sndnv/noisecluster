@@ -26,18 +26,16 @@ import noisecluster.jvm.transport.aeron.{Contexts, Defaults, Target}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import sys.process._
+import scala.sys.process._
+import scala.util.control.NonFatal
 
-class Service(config: Config) {
+class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: ActorSystem) {
   private val stream: Int = config.getInt("transport.stream")
   private val address: String = config.getString("transport.address")
   private val port: Int = config.getInt("transport.port")
-  private val interfaceOpt: Option[String] = if(config.hasPath("transport.interface")) Some(config.getString("transport.interface")) else None
+  private val interfaceOpt: Option[String] = if (config.hasPath("transport.interface")) Some(config.getString("transport.interface")) else None
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
   private val hostStopTimeout: Int = config.getInt("host.stopTimeout") //in seconds
-
-  private implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
-  private implicit val system = ActorSystem("ve")
 
   private val driver = MediaDriver.launch(Contexts.Driver.lowLatency)
   private implicit val aeron = Aeron.connect(Contexts.System.default)
@@ -47,6 +45,7 @@ class Service(config: Config) {
 
   val localHandlers = new LocalHandlers {
     override def startAudio(formatContainer: Option[AudioFormatContainer]): Future[Boolean] = {
+      println(formatContainer)
       Future {
         audioOpt match {
           case Some(audio) =>
@@ -124,7 +123,7 @@ class Service(config: Config) {
     }
 
     override def stopApplication(restart: Boolean): Future[Boolean] = {
-      if(applicationStopTimeout > 0) {
+      if (applicationStopTimeout > 0) {
         if (restart) {
           Future.failed(new NotImplementedError("Application restart in not available"))
           //TODO - implement as a service restart call?
@@ -141,7 +140,7 @@ class Service(config: Config) {
     }
 
     override def stopHost(restart: Boolean): Future[Boolean] = {
-      if(hostStopTimeout > 0) {
+      if (hostStopTimeout > 0) {
         s"/usr/bin/sudo /sbin/shutdown ${if (restart) "-r" else "-h"} `/bin/date --date 'now + $hostStopTimeout seconds' '+%H:%M'`".! match {
           case 0 => stopApplication(restart = false)
           case x => Future.failed(new RuntimeException(s"Unexpected exit code returned by shutdown command: [$x]"))
@@ -149,6 +148,44 @@ class Service(config: Config) {
       } else {
         Future.failed(new RuntimeException(s"Host stop/restart is disabled by config"))
       }
+    }
+  }
+
+  def shutdown(): Unit = {
+    try {
+      audioOpt match {
+        case Some(audio) =>
+          if (audio.isActive) audio.stop()
+          audio.close()
+          audioOpt = None
+        case None => //do nothing
+      }
+    } catch {
+      case NonFatal(e) => e.printStackTrace()
+    }
+
+    try {
+      transportOpt match {
+        case Some(transport) =>
+          if (transport.isActive) transport.stop()
+          transport.close()
+          transportOpt = None
+        case None => //do nothing
+      }
+    } catch {
+      case NonFatal(e) => e.printStackTrace()
+    }
+
+    try {
+      aeron.close()
+    } catch {
+      case NonFatal(e) => e.printStackTrace()
+    }
+
+    try {
+      driver.close()
+    } catch {
+      case NonFatal(e) => e.printStackTrace()
     }
   }
 }

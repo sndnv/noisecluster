@@ -15,14 +15,45 @@
   */
 package ve
 
-import com.typesafe.config.{Config, ConfigFactory}
+import akka.actor.ActorSystem
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import noisecluster.jvm.control.cluster.TargetService
+
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val appConfig = ConfigFactory.load().getConfig("noisecluster")
-    val service = new Service(appConfig)
+    val baseConfig = ConfigFactory.load()
+    val appConfig = baseConfig.getConfig("noisecluster.ve")
 
-    //TODO - add shutdown hooks
-    //TODO - add interrupt hooks
+    val clusterSystemName = appConfig.getString("control.systemName")
+    val clusterHost = appConfig.getString("control.cluster.host")
+    val clusterPort = appConfig.getInt("control.cluster.port")
+    val clusterAddress = s"akka.tcp://$clusterSystemName@$clusterHost:$clusterPort"
+
+    val localHost = appConfig.getString("control.local.host")
+    val localPort = appConfig.getInt("control.local.port")
+
+    val clusterConfig = baseConfig
+      .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(localPort))
+      .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(localHost))
+      .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(Seq(clusterAddress).asJava))
+      .withValue("akka.cluster.roles", ConfigValueFactory.fromIterable(Seq("target").asJava))
+
+    implicit val ec = ExecutionContext.Implicits.global
+    implicit val system = ActorSystem(clusterSystemName)
+
+    val service = new ApplicationService(appConfig)
+    val control = new TargetService(
+      clusterSystemName,
+      appConfig.getString("control.messengerName"),
+      service.localHandlers,
+      Some(clusterConfig)
+    )
+
+    sys.addShutdownHook {
+      service.shutdown()
+    }
   }
 }
