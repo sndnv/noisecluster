@@ -116,11 +116,6 @@ class BasicSpec extends FlatSpec with Matchers {
   it should "successfully stop and close its connection" in {
     target.isActive should be(true)
     target.stop()
-
-    waitUntil(what = "target becomes inactive", waitTimeMs = 500, waitAttempts = 10) {
-      !target.isActive
-    }
-
     target.close()
     target.isActive should be(false)
   }
