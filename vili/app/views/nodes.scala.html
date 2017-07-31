@@ -1,0 +1,112 @@
+@*
+* Copyright 2017 https://github.com/sndnv
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*@
+
+@import views.html.components.pageHead
+@import views.html.components.pageNav
+@import views.html.components.pageJs
+@import play.filters.csrf.CSRF
+
+@(title: String)(implicit environment: play.api.Environment, request: play.api.mvc.RequestHeader, csrfToken: Option[CSRF.Token])
+
+<!DOCTYPE html>
+<html>
+@pageHead(title)
+<body>
+
+@for(token <- csrfToken) {
+<div id="csrfToken" data-token-name="@{token.name}" data-token-value="@{token.value}"></div>
+}
+
+<div class="uk-container uk-container-expand uk-margin-medium-bottom">
+    @pageNav()
+    <div id="vili-nodes-main-grid" class="uk-flex-center" uk-grid>
+        <div><span uk-icon="icon: bolt"></span> Loading...</div>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <div class="vili-container uk-grid">
+        <div class="uk-width-2-5 vili-container-header-left"></div>
+        <div class="uk-width-1-5 vili-container-header-top"></div>
+        <div class="uk-width-2-5 vili-container-header-right"></div>
+        <div class="vili-container-content uk-width-1-1">
+            <div class="vili-sub-container uk-grid">
+                <div class="uk-width-1-4"></div>
+                <div class="uk-width-1-2 vili-sub-header-top">
+                    <div class="uk-text-center uk-text-success">Audio</div>
+                </div>
+                <div class="uk-width-1-4"></div>
+                <div class="uk-width-1-1 vili-sub-header">
+                    <div class="uk-text-center uk-text-danger uk-text-lead">Audio is active</div>
+                </div>
+                <div class="vili-sub-content uk-width-1-1">
+                    <div class="uk-grid uk-flex-center">
+                        <div><div class="vili-button"><div class="uk-text-center uk-text-warning">Start</div></div></div>
+                        <div><div class="vili-button"><div class="uk-text-center uk-text-warning">Stop</div></div></div>
+                        <div><div class="vili-button"><div class="uk-text-center uk-text-warning">Restart</div></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="vili-sub-container uk-grid">
+                <div class="uk-width-1-4"></div>
+                <div class="uk-width-1-2 vili-sub-header-top">
+                    <div class="uk-text-center uk-text-success">Transport</div>
+                </div>
+                <div class="uk-width-1-4"></div>
+                <div class="uk-width-1-1 vili-sub-header">
+                    <div class="uk-text-center uk-text-danger uk-text-lead">Audio is active</div>
+                </div>
+            </div>
+            <div class="vili-sub-container uk-grid">
+                <div class="uk-width-1-4"></div>
+                <div class="uk-width-1-2 vili-sub-header-top">
+                    <div class="uk-text-center uk-text-success">Application</div>
+                </div>
+                <div class="uk-width-1-4"></div>
+                <div class="uk-width-1-1 vili-sub-header">
+                    <div class="uk-text-center uk-text-danger uk-text-lead">Application is active</div>
+                </div>
+            </div>
+            <div class="vili-sub-container uk-grid">
+                <div class="uk-width-1-4"></div>
+                <div class="uk-width-1-2 vili-sub-header-top">
+                    <div class="uk-text-center uk-text-success">Host</div>
+                </div>
+                <div class="uk-width-1-4"></div>
+                <div class="uk-width-1-1 vili-sub-header">
+                    <div class="uk-text-center uk-text-danger uk-text-lead">Host is active</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="vili-message-container uk-grid">
+        <div class="uk-width-2-5 vili-message-header-left"></div>
+        <div class="uk-width-1-5 vili-message-header-top"><div class="uk-text-center uk-text-danger">Alert</div></div>
+        <div class="uk-width-2-5 vili-message-header-right"></div>
+        <div class="vili-message-content uk-width-1-1">
+            <div class="uk-text-center uk-text-success">Example alert message</div>
+        </div>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+</div>
+</body>
+@pageJs()
+</html>

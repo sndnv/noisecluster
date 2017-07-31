@@ -1,0 +1,11 @@
+# Routes
+
+GET     /favicon.ico                            controllers.Assets.at(path="/public/img", file="favicon.png")
+GET     /public/*file                           controllers.Assets.versioned(path="/public", file: Asset)
+
+GET     /                                       controllers.System.root
+GET     /home                                   controllers.System.home
+GET     /nodes                                  controllers.System.nodes
+GET     /cluster                                controllers.System.cluster
+GET     /status                                 controllers.System.status
+POST    /process                                controllers.System.processMessage
