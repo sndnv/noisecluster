@@ -45,4 +45,8 @@ class SourceService(
   def forwardMessage(message: Messages.ControlMessage): Unit = {
     messenger ! ForwardMessage(None, message)
   }
+
+  def processMessage(message: Messages.ControlMessage): Unit = {
+    messenger ! message
+  }
 }

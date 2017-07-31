@@ -45,7 +45,6 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
 
   val localHandlers = new LocalHandlers {
     override def startAudio(formatContainer: Option[AudioFormatContainer]): Future[Boolean] = {
-      println(formatContainer)
       Future {
         audioOpt match {
           case Some(audio) =>
