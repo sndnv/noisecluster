@@ -1,5 +1,7 @@
+@import "colors";
+
 /// Mixin to place items on a circle
-/// https://css-tricks.com/snippets/sass/placing-items-circle/
+/// Source: https://css-tricks.com/snippets/sass/placing-items-circle/
 /// @author Hugo Giraudel
 /// @author Ana Tudor
 /// @param {Integer} $item-count - Number of items on the circle
@@ -23,7 +25,7 @@
     margin: -($item-size / 2);
 
     $angle: (360 / $item-count);
-    $rot: 0;
+    $rot: -30;
 
     @for $i from 1 through $item-count {
       &:nth-of-type(#{$i}) {
@@ -38,22 +40,15 @@
   }
 }
 
-.circle-container {
-  @include on-circle($item-count: 8, $circle-size: 20em, $item-size: 6em);
-  margin: 5em auto 0;
-  border: solid 5px green;
+.vili-home-node-container {
+    @include on-circle($item-count: 9, $circle-size: 60em, $item-size: 6em*2.5);
+    margin: 5em auto 0;
+    border: 3px solid $color-base-normal;
+    background-color: $color-base-normal;
+    box-shadow: inset 0em 0em 10em 15em $color-base-background;
 
-  img {
-    display: block;
-    max-width: 100%;
-    border-radius: 50%;
-    filter: grayscale(100%);
-    border: solid 5px green;
-    transition: .15s;
-
-    &:hover,
-    &:active {
-      filter: grayscale(0);
+    &.inactive {
+        border-color: $color-base-error;
+        background-color: $color-base-error;
     }
-  }
 }

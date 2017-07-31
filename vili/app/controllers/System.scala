@@ -30,7 +30,7 @@ import vili.ApplicationService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class System @Inject()(/*TODO - enable control: SourceService, appService: vili.ApplicationService*/)(implicit ec: ExecutionContext, environment: Environment)
+class   System @Inject()(/*TODO - enable control: SourceService, appService: vili.ApplicationService*/)(implicit ec: ExecutionContext, environment: Environment)
   extends ClientController() {
   private implicit val serviceStateWrites = Writes[ServiceState] { state => JsString(state.toString) }
   private implicit val nodeStateWrites = Json.writes[NodeState]
@@ -89,7 +89,7 @@ class System @Inject()(/*TODO - enable control: SourceService, appService: vili.
             "targets" -> 3,
             "state" -> Json.obj(
               "localSource" -> Json.obj(
-                "audio" -> "Stopped",
+                "audio" -> "Restarting",
                 "transport" -> "Stopping",
                 "application" -> "Active",
                 "host" -> "Restarting"

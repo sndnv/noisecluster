@@ -27,7 +27,7 @@
 <body>
 
 @for(token <- csrfToken) {
-<div id="csrfToken" data-token-name="@{token.name}" data-token-value="@{token.value}"></div>
+    <div id="csrfToken" data-token-name="@{token.name}" data-token-value="@{token.value}"></div>
 }
 
 <div class="uk-container uk-container-expand uk-margin-medium-bottom">
@@ -55,9 +55,33 @@
                 </div>
                 <div class="vili-sub-content uk-width-1-1">
                     <div class="uk-grid uk-flex-center">
-                        <div><div class="vili-button"><div class="uk-text-center uk-text-warning">Start</div></div></div>
-                        <div><div class="vili-button"><div class="uk-text-center uk-text-warning">Stop</div></div></div>
-                        <div><div class="vili-button"><div class="uk-text-center uk-text-warning">Restart</div></div></div>
+                        <div>
+                            <div class="vili-button-outer">
+                                <div class="vili-button-middle">
+                                    <div class="vili-button-inner active">
+                                        <div class="vili-button-label"><span uk-icon="icon: upload; ratio: 2"></span> Start</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="vili-button-outer">
+                                <div class="vili-button-middle">
+                                    <div class="vili-button-inner active">
+                                        <div class="vili-button-label"><span uk-icon="icon: download; ratio: 2"></span> Stop</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="vili-button-outer">
+                                <div class="vili-button-middle">
+                                    <div class="vili-button-inner active">
+                                        <div class="vili-button-label"><span uk-icon="icon: refresh; ratio: 2"></span> Restart</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

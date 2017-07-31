@@ -1,0 +1,58 @@
+@import "colors";
+
+///Source: https://codepen.io/crystalenka/pen/VYaGXm
+@mixin hexagon($width, $background) {
+    $height: 3.75em / 6.5em * $width;
+
+    background-color: $background;
+    width: $width;
+    height: $height;
+    position: relative;
+    margin: ($height / 2 + 1.25em);
+    box-sizing: border-box;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    color: #fff;
+
+    &:before {
+        content: " ";
+        width: 0;
+        height: 0;
+        border-bottom: ($height / 2) solid $background;
+        border-left: ($width / 2) solid transparent;
+        border-right: ($width / 2) solid transparent;
+        position: absolute;
+        display: block;
+        top: -($height / 2);
+    }
+
+    &:after {
+        content: " ";
+        width: 0;
+        height: 0;
+        border-top: solid $background;
+        border-top-width: ($height / 2);
+        border-left: ($width/2) solid transparent;
+        border-right: ($width/2) solid transparent;
+        position: absolute;
+        display: block;
+        top: $height;
+    }
+}
+
+@mixin hexagon-outer($background, $size-modifier) {
+    @include hexagon(4.75em*$size-modifier, $background);
+}
+
+@mixin hexagon-middle($background, $size-modifier) {
+    @include hexagon(4.5em*$size-modifier, $background);
+    top: 3%;
+    z-index: 1;
+}
+
+@mixin hexagon-inner($background, $size-modifier) {
+    @include hexagon(4em*$size-modifier, $background);
+    top: 6%;
+    z-index: 2;
+}

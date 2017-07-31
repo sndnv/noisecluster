@@ -23,7 +23,7 @@
 
 <!DOCTYPE html>
 <html>
-@pageHead(title, Seq("stylesheets/home.css", "stylesheets/hexagon.css"))
+@pageHead(title, Seq("stylesheets/home.css"))
 <body>
 
 @for(token <- csrfToken) {
@@ -32,21 +32,7 @@
 
 <div class="uk-container uk-container-expand uk-margin-medium-bottom">
     @pageNav()
-    <div id="vili-home-main-grid" class="uk-flex-center" uk-grid>
-        <div><span uk-icon="icon: bolt"></span> Loading...</div>
-    </div>
-
-</div>
-<div>
-    <ul class='circle-container'>
-        <li><div class="hex-outer"><div class="hex-middle"><div class="hex-inner">Test 1</div></div></div></li>
-        <li><div class="hex-outer"><div class="hex-middle"><div class="hex-inner">Test 2</div></div></div></li>
-        <li><div class="hex-outer"><div class="hex-middle"><div class="hex-inner">Test 3</div></div></div></li>
-        <li><div class="hex-outer"><div class="hex-middle"><div class="hex-inner">Test 4</div></div></div></li>
-        <li><div class="hex-inner">Test 5</div></li>
-        <li><div class="hex-outer">Test 6</div></li>
-        <li><div class="hex-midle">Test 7</div></li>
-    </ul>
+    <div><ul class='vili-home-node-container'></ul></div>
 </div>
 </body>
 @pageJs()

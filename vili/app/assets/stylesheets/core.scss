@@ -1,0 +1,174 @@
+/**
+  * Copyright 2017 https://github.com/sndnv
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+@import "colors";
+@import "hexagon";
+
+html {
+    height: 100%;
+    background-color: $color-base-background;
+}
+
+/*** Button ***/
+.vili-button-outer {
+    @include hexagon-outer($color-base-normal, 2.5);
+}
+
+.vili-button-middle {
+    @include hexagon-middle($color-base-background, 2.5);
+}
+
+.vili-button-inner {
+    @include hexagon-inner($color-base-disabled, 2.5);
+
+    &.active {
+        @include hexagon-inner($color-node-active, 2.5);
+    }
+    &.important {
+        @include hexagon-inner($color-base-important, 2.5);
+    }
+    &.transition {
+        @include hexagon-inner($color-node-transition, 2.5);
+        animation: transition-node 2s infinite;
+        &:before { animation: transition-node-before 2s infinite; }
+        &:after { animation: transition-node-after 2s infinite; }
+    }
+    &.inactive {
+        @include hexagon-inner($color-node-inactive, 2.5);
+    }
+}
+
+.vili-button-outer:hover {
+    cursor: pointer;
+    .vili-button-inner {
+        background-color: $color-base-action;
+        &:before { border-bottom-color: $color-base-action; }
+        &:after { border-top-color: $color-base-action; }
+    }
+}
+
+.vili-button-label {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+@keyframes transition-node {
+    0%, 49% { background-color: $color-node-transition; }
+    50%, 100% { background-color: $color-base-action; }
+}
+
+@keyframes transition-node-before {
+    0%, 49% { border-bottom-color: $color-node-transition; }
+    50%, 100% { border-bottom-color: $color-base-action; }
+}
+
+@keyframes transition-node-after {
+    0%, 49% { border-top-color: $color-node-transition; }
+    50%, 100% { border-top-color: $color-base-action; }
+}
+
+/*** Container ***/
+.vili-container {
+}
+
+.vili-container-header-top {
+    border-top: 35px solid $color-node-active;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    height: 0;
+    padding: 0;
+    border-radius: 16px;
+}
+
+.vili-container-header-left {
+    border-left: 1px solid $color-node-active;
+    border-top-left-radius: 5px;
+    border-top: 1px solid $color-node-active;
+}
+
+.vili-container-header-right {
+    border-right: 1px solid $color-node-active;
+    border-top-right-radius: 5px;
+    border-top: 1px solid $color-node-active;
+}
+
+.vili-container-content {
+    min-height: 50px;
+    border-bottom: 1px solid $color-node-active;
+    border-left: 1px solid $color-node-active;
+    border-right: 1px solid $color-node-active;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+/*** Sub-container ***/
+.vili-sub-container {
+    padding: 15px;
+}
+
+.vili-sub-header-top {
+    border-bottom: 20px solid $color-node-active;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    height: 0;
+    padding: 0;
+}
+
+.vili-sub-header {
+    height: 40px;
+    background: $color-node-active;
+    padding: 0;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.vili-sub-content {
+    padding: 50px;
+    min-height: 50px;
+    border: 1px solid $color-node-active;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+/*** Message ***/
+.vili-message-container {
+    padding: 15px;
+    min-height: 100px;
+}
+
+.vili-message-header-top {
+    padding: 0;
+}
+
+.vili-message-header-left {
+    border-bottom: 25px solid $color-node-active;
+    border-right: 50px solid transparent;
+    border-top-left-radius: 5px;
+}
+
+.vili-message-header-right {
+    border-bottom: 25px solid $color-node-active;
+    border-left: 50px solid transparent;
+    border-top-right-radius: 5px;
+}
+
+.vili-message-content {
+    min-height: 50px;
+    background-color: $color-node-active;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    padding: 0;
+}
