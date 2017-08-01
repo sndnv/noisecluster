@@ -14,15 +14,19 @@
   * limitations under the License.
   */
 
-$color-base-normal:     rgba(63, 191, 191, 1);
+$color-base-normal:     rgba(63, 191, 191, 0.75);
 $color-base-important:  rgba(164,202,20, 1);
 $color-base-action:     rgba(26,143,168, 1);
-$color-base-warning:    rgba(208,115,38, 1);
-$color-base-error:      rgba(223,24,24, 1);
-$color-base-disabled:   gray;
+$color-base-warning:    rgba(208,115,38, 0.5);
+$color-base-error:      rgba(223,24,24, 0.5);
+$color-base-disabled:   rgba(128, 128, 128, 0.5);
 
 $color-base-background: rgba(0, 40, 63, 1);
 
 $color-node-active:     $color-base-normal;
 $color-node-transition: $color-base-warning;
 $color-node-inactive:   $color-base-error;
+
+$color-text-normal:     rgba(235, 227, 248, 1);
+$color-text-warning:    rgba(230, 184, 40, 1);
+$color-text-error:      rgba(232, 39, 55, 1);

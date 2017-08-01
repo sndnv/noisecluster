@@ -19,6 +19,7 @@
 html {
     height: 100%;
     background-color: $color-base-background;
+    color: $color-text-normal;
 }
 
 .vili-nav-grid {
@@ -178,31 +179,63 @@ html {
 }
 
 /*** Message ***/
-.vili-message-container {
-    padding: 15px;
-    min-height: 100px;
+%vili-message-container {
+    padding: 1vh;
+    min-height: 8vh;
+    max-width: 40vw;
+
+    .vili-message-header-top {
+        padding: 0;
+        color: $color-text-normal;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .vili-message-header-left {
+        border-bottom: 2vh solid $color-base-normal;
+        border-right: 4vh solid transparent;
+        border-top-left-radius: 0.5vh;
+    }
+
+    .vili-message-header-right {
+        border-bottom: 2vh solid $color-base-normal;
+        border-left: 4vh solid transparent;
+        border-top-right-radius: 0.5vh;
+    }
+
+    .vili-message-content {
+        min-height: 4vh;
+        text-align: center;
+        font-weight: bold;
+        color: $color-text-normal;
+        background-color: $color-base-normal;
+        border-bottom-left-radius: 0.5vh;
+        border-bottom-right-radius: 0.5vh;
+        padding: 1vh 0 1vh 0;
+    }
 }
 
-.vili-message-header-top {
-    padding: 0;
+.vili-message-info {
+    @extend %vili-message-container;
 }
 
-.vili-message-header-left {
-    border-bottom: 25px solid $color-node-active;
-    border-right: 50px solid transparent;
-    border-top-left-radius: 5px;
-}
+.vili-message-warning {
+    @extend %vili-message-container;
 
-.vili-message-header-right {
-    border-bottom: 25px solid $color-node-active;
-    border-left: 50px solid transparent;
-    border-top-right-radius: 5px;
+    .vili-message-header-left { border-bottom-color: $color-base-warning; }
+    .vili-message-header-right { border-bottom-color: $color-base-warning; }
+    .vili-message-content {
+        color: $color-text-warning;
+        background-color: $color-base-warning;
+    }
 }
+.vili-message-error {
+    @extend %vili-message-container;
 
-.vili-message-content {
-    min-height: 50px;
-    background-color: $color-node-active;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    padding: 0;
+    .vili-message-header-left { border-bottom-color: $color-base-error; }
+    .vili-message-header-right { border-bottom-color: $color-base-error; }
+    .vili-message-content {
+        color: $color-text-error;
+        background-color: $color-base-error;
+    }
 }
