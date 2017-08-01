@@ -21,7 +21,7 @@ define(["utils"],
         Home.buildButton = function (nodeName, serviceStates, label, nodeState) {
             return $("<li></li>", {}).append(
                 $("<div></div>", {
-                    "class": "vili-button-outer",
+                    "class": "vili-button-xlarge",
                     "click": Home.toggleAudio,
                     "data-node-name": nodeName,
                     "data-node-audio-state": serviceStates.audio,

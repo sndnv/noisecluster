@@ -40,12 +40,20 @@
   }
 }
 
+.vili-home-node-wrapper {
+    margin: 5vh auto 0;
+    border: 0.4vh dotted $color-base-normal;
+    border-radius: 50%;
+    height: 65vh;
+    width: 65vh;
+    padding: 12vh;
+}
+
 .vili-home-node-container {
-    @include on-circle($item-count: 9, $circle-size: 60em, $item-size: 6em*2.5);
-    margin: 5em auto 0;
-    border: 3px solid $color-base-normal;
+    @include on-circle($item-count: 9, $circle-size: 65vh, $item-size: 9vh*2.5);
+    border: 0.4vh solid $color-base-normal;
     background-color: $color-base-normal;
-    box-shadow: inset 0em 0em 10em 15em $color-base-background;
+    box-shadow: inset 0em 0em 10vh 15vh $color-base-background;
 
     &.inactive {
         border-color: $color-base-error;

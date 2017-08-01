@@ -16,11 +16,41 @@
 
 @()(implicit environment: play.api.Environment)
 <div class="uk-width-1-1">
-    <div class="uk-text-right">
-        <a class="uk-link-muted" href="/home" title="Home" uk-tooltip><span uk-icon="icon: nut"></span> Home</a>
-        /
-        <a class="uk-link-muted" href="/nodes" title="Nodes" uk-tooltip><span uk-icon="icon: social"></span> Nodes</a>
-        /
-        <a class="uk-link-muted" href="/cluster" title="Cluster" uk-tooltip><span uk-icon="icon: server"></span> Cluster</a>
+    <div class="uk-position-top-right">
+        <div class="vili-nav-grid uk-grid uk-flex-center">
+            <div class="uk-width-1-2">
+                <a href="/home" title="Home" uk-tooltip>
+                    <div class="vili-button">
+                        <div class="vili-button-middle">
+                            <div class="vili-button-inner active">
+                                <div class="vili-button-label"><span uk-icon="icon: nut"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="uk-width-1-2">
+                <a href="/nodes" title="Nodes" uk-tooltip>
+                    <div class="vili-button">
+                        <div class="vili-button-middle">
+                            <div class="vili-button-inner active">
+                                <div class="vili-button-label"><span uk-icon="icon: social"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="uk-width-1-2">
+                <a href="/cluster" title="Cluster" uk-tooltip>
+                    <div class="vili-button">
+                        <div class="vili-button-middle">
+                            <div class="vili-button-inner active">
+                                <div class="vili-button-label"><span uk-icon="icon: server"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
     </div>
 </div>

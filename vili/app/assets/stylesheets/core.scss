@@ -21,41 +21,75 @@ html {
     background-color: $color-base-background;
 }
 
-/*** Button ***/
-.vili-button-outer {
-    @include hexagon-outer($color-base-normal, 2.5);
+.vili-nav-grid {
+    .vili-button {
+        margin: -0.5vh -2vh 1.5vh -2.5vh;
+    }
 }
 
-.vili-button-middle {
-    @include hexagon-middle($color-base-background, 2.5);
+/*** Buttons ***/
+%vili-button-outer-base {
+    &:hover {
+        cursor: pointer;
+        .vili-button-inner {
+            @include hexagon-with-override($color-base-action !important);
+        }
+    }
 }
 
-.vili-button-inner {
-    @include hexagon-inner($color-base-disabled, 2.5);
+%vili-button-inner-base {
+    &.active { @include hexagon-with-override($color-node-active); }
+    &.inactive { @include hexagon-with-override($color-node-inactive); }
+    &.important { @include hexagon-with-override($color-base-important); }
 
-    &.active {
-        @include hexagon-inner($color-node-active, 2.5);
-    }
-    &.important {
-        @include hexagon-inner($color-base-important, 2.5);
-    }
     &.transition {
-        @include hexagon-inner($color-node-transition, 2.5);
+        @include hexagon-with-override($color-node-transition);
+
         animation: transition-node 2s infinite;
         &:before { animation: transition-node-before 2s infinite; }
         &:after { animation: transition-node-after 2s infinite; }
     }
-    &.inactive {
-        @include hexagon-inner($color-node-inactive, 2.5);
+}
+
+.vili-button {
+    @extend %vili-button-outer-base;
+    @include hexagon-outer($color-base-normal, 1.75);
+
+    .vili-button-middle {
+        @include hexagon-middle($color-base-background, 1.75);
+
+        .vili-button-inner {
+            @include hexagon-inner($color-base-disabled, 1.75);
+            @extend %vili-button-inner-base;
+        }
     }
 }
 
-.vili-button-outer:hover {
-    cursor: pointer;
-    .vili-button-inner {
-        background-color: $color-base-action;
-        &:before { border-bottom-color: $color-base-action; }
-        &:after { border-top-color: $color-base-action; }
+.vili-button-large {
+    @extend %vili-button-outer-base;
+    @include hexagon-outer($color-base-normal, 2.5);
+
+    .vili-button-middle {
+        @include hexagon-middle($color-base-background, 2.5);
+
+        .vili-button-inner {
+            @include hexagon-inner($color-base-disabled, 2.5);
+            @extend %vili-button-inner-base;
+        }
+    }
+}
+
+.vili-button-xlarge {
+    @extend %vili-button-outer-base;
+    @include hexagon-outer($color-base-normal, 3.5);
+
+    .vili-button-middle {
+        @include hexagon-middle($color-base-background, 3.5);
+
+        .vili-button-inner {
+            @include hexagon-inner($color-base-disabled, 3.5);
+            @extend %vili-button-inner-base;
+        }
     }
 }
 
