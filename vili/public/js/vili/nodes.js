@@ -19,38 +19,8 @@ define(["utils"],
         }
 
         Nodes.prototype.page = function () {
-            var mainGrid = $("#vili-nodes-main-grid");
-            utils.getStatus().done(function (result) {
-                console.log(result);
-
-                var localSourceContainer = $("<div></div>", {
-                    "class": "uk-card uk-card-default uk-card-body",
-                    html: JSON.stringify(result.state.localSource),
-                    click: function () {
-                        //TODO
-                        utils.postMessage({}).done(function (clickResult) {
-                            console.log(clickResult);
-                        });
-                    }
-                });
-
-                mainGrid.html(null);
-                mainGrid.append(localSourceContainer);
-
-                var targets = result.state.targets;
-                for (var target in targets) {
-                    var targetContainer = $("<div></div>", {
-                        "class": "uk-card uk-card-default uk-card-body",
-                        html: target + " | " + JSON.stringify(targets[target]),
-                        click: function () {
-                            utils.postMessage({}).done(function (clickResult) {
-                                console.log(clickResult);
-                            });
-                        }
-                    });
-
-                    mainGrid.append(targetContainer);
-                }
+            $(".vili-sub-header").click(function (e) {
+                $(e.currentTarget).next().toggle({"duration": 0});
             });
         };
 

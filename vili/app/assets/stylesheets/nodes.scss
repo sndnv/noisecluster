@@ -1,0 +1,119 @@
+/**
+  * Copyright 2017 https://github.com/sndnv
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+@import "colors";
+
+/*** Container ***/
+.vili-container {
+}
+
+.vili-container-header {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+
+    .vili-container-header-left {
+        border-left: 0.2vh solid $color-node-active;
+        border-top: 0.2vh solid $color-node-active;
+        border-top-left-radius: 0.5vh;
+        width: 40%;
+    }
+
+    .vili-container-header-middle {
+        height: 3vh;
+        border-bottom: 0.2vh solid $color-node-active;
+        width: 20%;
+        margin-left: 2.5vw;
+        margin-right: 2.5vw;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .vili-container-header-right {
+        border-right: 0.2vh solid $color-node-active;
+        border-top: 0.2vh solid $color-node-active;
+        border-top-right-radius: 0.5vh;
+        width: 40%;
+    }
+}
+
+.vili-container-content {
+    border-left: 0.2vh dashed $color-node-active;
+    border-right: 0.2vh dashed $color-node-active;
+}
+
+.vili-container-footer {
+    border-bottom: 0.2vh solid $color-node-active;
+    border-left: 0.2vh solid $color-node-active;
+    border-right: 0.2vh solid $color-node-active;
+    border-bottom-right-radius: 0.5vh;
+    border-bottom-left-radius: 0.5vh;
+    height: 3vh;
+}
+
+/*** Sub-container ***/
+.vili-sub-container {
+    margin: 1vh !important;
+    padding: 1vh;
+
+    &:hover {
+        cursor: pointer;
+        .vili-sub-header {
+            .vili-sub-header-top { border-bottom-color: $color-base-action; }
+            .vili-sub-header-status { background: $color-base-action; }
+        }
+        .vili-sub-content {
+            border-color: $color-base-action;
+        }
+    }
+
+    .vili-sub-content {
+        margin-top: 3vh;
+        padding-bottom: 7vh;
+        border-left: 0.2vh dotted $color-node-active;
+        border-right: 0.2vh dotted $color-node-active;
+        border-bottom: 0.2vh dotted $color-node-active;
+        border-bottom-right-radius: 0.5vh;
+        border-bottom-left-radius: 0.5vh;
+        display: none;
+    }
+}
+
+.vili-sub-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+
+    .vili-sub-header-top {
+        width: 30%;
+        border-bottom: 2vh solid $color-node-active;
+        border-left: 3vh solid transparent;
+        border-right: 3vh solid transparent;
+        height: 0;
+        padding: 0;
+    }
+
+    .vili-sub-header-status {
+        width: 100%;
+        height: 4vh;
+        background: $color-node-active;
+        padding: 0;
+        border-radius: 0.5vh;
+        font-size: 2em;
+        font-weight: bold;
+        text-align: center;
+    }
+}

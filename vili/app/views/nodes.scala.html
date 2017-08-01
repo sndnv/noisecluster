@@ -23,7 +23,7 @@
 
 <!DOCTYPE html>
 <html>
-@pageHead(title)
+@pageHead(title, Seq("stylesheets/nodes.css"))
 <body>
 
 @for(token <- csrfToken) {
@@ -32,120 +32,142 @@
 
 <div class="uk-container uk-container-expand uk-margin-medium-bottom">
     @pageNav()
-    <div id="vili-nodes-main-grid" class="uk-flex-center" uk-grid>
-        <div><span uk-icon="icon: bolt"></span> Loading...</div>
-    </div>
-    <br>
-    <br>
-    <br>
-    <br>
-    <div class="vili-container uk-grid">
-        <div class="uk-width-2-5 vili-container-header-left"></div>
-        <div class="uk-width-1-5 vili-container-header-top"></div>
-        <div class="uk-width-2-5 vili-container-header-right"></div>
-        <div class="vili-container-content uk-width-1-1">
-            <div class="vili-sub-container uk-grid">
-                <div class="uk-width-1-4"></div>
-                <div class="uk-width-1-2 vili-sub-header-top">
-                    <div class="uk-text-center">Audio</div>
+    <div id="vili-nodes-main-grid" class="uk-flex-center uk-margin-large-top uk-grid">
+        <div class="uk-width-1-4">
+            <div class="vili-container">
+                <div class="vili-container-header">
+                    <div class="vili-container-header-left"></div>
+                    <div class="vili-container-header-middle">src0</div>
+                    <div class="vili-container-header-right"></div>
                 </div>
-                <div class="uk-width-1-4"></div>
-                <div class="uk-width-1-1 vili-sub-header">
-                    <div class="uk-text-center uk-text-lead">Audio is active</div>
-                </div>
-                <div class="vili-sub-content uk-width-1-1">
-                    <div class="uk-grid uk-flex-center">
-                        <div>
-                            <div class="vili-button-large">
-                                <div class="vili-button-middle">
-                                    <div class="vili-button-inner active">
-                                        <div class="vili-button-label"><span uk-icon="icon: upload; ratio: 2"></span></div>
+                <div class="vili-container-content uk-width-1-1">
+                    <div class="vili-sub-container">
+                        <div class="vili-sub-header">
+                            <div class="vili-sub-header-top"></div>
+                            <div class="vili-sub-header-status">Audio</div>
+                        </div>
+                        <div class="vili-sub-content">
+                            <div class="uk-grid uk-flex-center">
+                                <div>
+                                    <div class="vili-button-large">
+                                        <div class="vili-button-middle">
+                                            <div class="vili-button-inner active">
+                                                <div class="vili-button-label"><span uk-icon="icon: upload; ratio: 2"></span></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="vili-button-large">
-                                <div class="vili-button-middle">
-                                    <div class="vili-button-inner active">
-                                        <div class="vili-button-label"><span uk-icon="icon: download; ratio: 2"></span></div>
+                                <div>
+                                    <div class="vili-button-large">
+                                        <div class="vili-button-middle">
+                                            <div class="vili-button-inner active">
+                                                <div class="vili-button-label"><span uk-icon="icon: download; ratio: 2"></span></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="vili-button-large">
-                                <div class="vili-button-middle">
-                                    <div class="vili-button-inner active">
-                                        <div class="vili-button-label"><span uk-icon="icon: refresh; ratio: 2"></span></div>
+                                <div>
+                                    <div class="vili-button-large">
+                                        <div class="vili-button-middle">
+                                            <div class="vili-button-inner active">
+                                                <div class="vili-button-label"><span uk-icon="icon: refresh; ratio: 2"></span></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <div class="vili-sub-container">
+                        <div class="vili-sub-header">
+                            <div class="vili-sub-header-top"></div>
+                            <div class="vili-sub-header-status">Transport</div>
+                        </div>
+                    </div>
+                    <div class="vili-sub-container">
+                        <div class="vili-sub-header">
+                            <div class="vili-sub-header-top"></div>
+                            <div class="vili-sub-header-status">Application</div>
+                        </div>
+                    </div>
+                    <div class="vili-sub-container">
+                        <div class="vili-sub-header">
+                            <div class="vili-sub-header-top"></div>
+                            <div class="vili-sub-header-status">Host</div>
+                        </div>
+                    </div>
                 </div>
+                <div class="vili-container-footer"></div>
             </div>
-            <div class="vili-sub-container uk-grid">
-                <div class="uk-width-1-4"></div>
-                <div class="uk-width-1-2 vili-sub-header-top">
-                    <div class="uk-text-center">Transport</div>
+        </div>
+        <div class="uk-width-1-4">
+            <div class="vili-container">
+                <div class="vili-container-header">
+                    <div class="vili-container-header-left"></div>
+                    <div class="vili-container-header-middle">rpi0</div>
+                    <div class="vili-container-header-right"></div>
                 </div>
-                <div class="uk-width-1-4"></div>
-                <div class="uk-width-1-1 vili-sub-header">
-                    <div class="uk-text-center uk-text-lead">Audio is active</div>
+                <div class="vili-container-content">
+                    <div class="vili-sub-container">
+                        <div class="vili-sub-header">
+                            <div class="vili-sub-header-top"></div>
+                            <div class="vili-sub-header-status">Audio</div>
+                        </div>
+                    </div>
+                    <div class="vili-sub-container">
+                        <div class="vili-sub-header">
+                            <div class="vili-sub-header-top"></div>
+                            <div class="vili-sub-header-status">Transport</div>
+                        </div>
+                    </div>
+                    <div class="vili-sub-container">
+                        <div class="vili-sub-header">
+                            <div class="vili-sub-header-top"></div>
+                            <div class="vili-sub-header-status">Application</div>
+                        </div>
+                        <div class="vili-sub-content">
+                            <div class="uk-grid uk-flex-center">
+                                <div>
+                                    <div class="vili-button-large">
+                                        <div class="vili-button-middle">
+                                            <div class="vili-button-inner active">
+                                                <div class="vili-button-label"><span uk-icon="icon: upload; ratio: 2"></span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="vili-button-large">
+                                        <div class="vili-button-middle">
+                                            <div class="vili-button-inner active">
+                                                <div class="vili-button-label"><span uk-icon="icon: download; ratio: 2"></span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="vili-button-large">
+                                        <div class="vili-button-middle">
+                                            <div class="vili-button-inner active">
+                                                <div class="vili-button-label"><span uk-icon="icon: refresh; ratio: 2"></span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vili-sub-container">
+                        <div class="vili-sub-header">
+                            <div class="vili-sub-header-top"></div>
+                            <div class="vili-sub-header-status">Host</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="vili-sub-container uk-grid">
-                <div class="uk-width-1-4"></div>
-                <div class="uk-width-1-2 vili-sub-header-top">
-                    <div class="uk-text-center">Application</div>
-                </div>
-                <div class="uk-width-1-4"></div>
-                <div class="uk-width-1-1 vili-sub-header">
-                    <div class="uk-text-center uk-text-lead">Application is active</div>
-                </div>
-            </div>
-            <div class="vili-sub-container uk-grid">
-                <div class="uk-width-1-4"></div>
-                <div class="uk-width-1-2 vili-sub-header-top">
-                    <div class="uk-text-center">Host</div>
-                </div>
-                <div class="uk-width-1-4"></div>
-                <div class="uk-width-1-1 vili-sub-header">
-                    <div class="uk-text-center uk-text-lead">Host is active</div>
-                </div>
+                <div class="vili-container-footer"></div>
             </div>
         </div>
     </div>
-    <br>
-    <div class="vili-message-info uk-grid">
-        <div class="uk-width-2-5 vili-message-header-left"></div>
-        <div class="uk-width-1-5 vili-message-header-top"><div>Info</div></div>
-        <div class="uk-width-2-5 vili-message-header-right"></div>
-        <div class="vili-message-content uk-width-1-1">
-            <div>Example alert message</div>
-        </div>
-    </div>
-    <div class="vili-message-warning uk-grid">
-        <div class="uk-width-2-5 vili-message-header-left"></div>
-        <div class="uk-width-1-5 vili-message-header-top"><div>Warning</div></div>
-        <div class="uk-width-2-5 vili-message-header-right"></div>
-        <div class="vili-message-content uk-width-1-1">
-            <div>Example alert message</div>
-        </div>
-    </div>
-    <div class="vili-message-error uk-grid">
-        <div class="uk-width-2-5 vili-message-header-left"></div>
-        <div class="uk-width-1-5 vili-message-header-top"><div>Error</div></div>
-        <div class="uk-width-2-5 vili-message-header-right"></div>
-        <div class="vili-message-content uk-width-1-1">
-            <div>Example alert message</div>
-        </div>
-    </div>
-    <br>
-    <br>
-    <br>
-    <br>
 </div>
 </body>
 @pageJs()

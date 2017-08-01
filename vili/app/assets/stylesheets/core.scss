@@ -29,6 +29,29 @@ html {
 }
 
 /*** Buttons ***/
+@mixin hexagon-outer($background, $size-modifier) {
+    @include hexagon(4.75vh*$size-modifier, $background);
+    z-index: 1;
+}
+
+@mixin hexagon-middle($background, $size-modifier) {
+    @include hexagon(4.5vh*$size-modifier, $background);
+    top: 3%;
+    z-index: 2;
+}
+
+@mixin hexagon-inner($background, $size-modifier) {
+    @include hexagon(4vh*$size-modifier, $background);
+    top: 6%;
+    z-index: 3;
+}
+
+@mixin hexagon-with-override($background) {
+    background-color: $background;
+    &:before { border-bottom-color: $background; }
+    &:after { border-top-color: $background; }
+}
+
 %vili-button-outer-base {
     &:hover {
         cursor: pointer;
@@ -113,69 +136,6 @@ html {
 @keyframes transition-node-after {
     0%, 49% { border-top-color: $color-node-transition; }
     50%, 100% { border-top-color: $color-base-action; }
-}
-
-/*** Container ***/
-.vili-container {
-}
-
-.vili-container-header-top {
-    border-top: 35px solid $color-node-active;
-    border-left: 50px solid transparent;
-    border-right: 50px solid transparent;
-    height: 0;
-    padding: 0;
-    border-radius: 16px;
-}
-
-.vili-container-header-left {
-    border-left: 1px solid $color-node-active;
-    border-top-left-radius: 5px;
-    border-top: 1px solid $color-node-active;
-}
-
-.vili-container-header-right {
-    border-right: 1px solid $color-node-active;
-    border-top-right-radius: 5px;
-    border-top: 1px solid $color-node-active;
-}
-
-.vili-container-content {
-    min-height: 50px;
-    border-bottom: 1px solid $color-node-active;
-    border-left: 1px solid $color-node-active;
-    border-right: 1px solid $color-node-active;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-}
-
-/*** Sub-container ***/
-.vili-sub-container {
-    padding: 15px;
-}
-
-.vili-sub-header-top {
-    border-bottom: 20px solid $color-node-active;
-    border-left: 50px solid transparent;
-    border-right: 50px solid transparent;
-    height: 0;
-    padding: 0;
-}
-
-.vili-sub-header {
-    height: 40px;
-    background: $color-node-active;
-    padding: 0;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-}
-
-.vili-sub-content {
-    padding: 50px;
-    min-height: 50px;
-    border: 1px solid $color-node-active;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
 }
 
 /*** Message ***/
