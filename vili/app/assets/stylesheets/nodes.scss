@@ -16,104 +16,148 @@
 @import "colors";
 
 /*** Container ***/
-.vili-container {
-}
+%vili-container {
+    margin: 0 7vh 7vh 7vh !important;
+    border-color: $color-node-active;
+    color: $color-node-active;
 
-.vili-container-header {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
+    .vili-container-header {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
 
-    .vili-container-header-left {
-        border-left: 0.2vh solid $color-node-active;
-        border-top: 0.2vh solid $color-node-active;
-        border-top-left-radius: 0.5vh;
-        width: 40%;
+        .vili-container-header-left {
+            border-left: 0.2vh solid;
+            border-top: 0.2vh solid;
+            border-top-left-radius: 0.5vh;
+            width: 40%;
+        }
+
+        .vili-container-header-middle {
+            height: 3vh;
+            border-bottom: 0.2vh solid;
+            width: 20%;
+            margin-left: 2.5vw;
+            margin-right: 2.5vw;
+            text-align: center;
+            font-weight: bold;
+            color: $color-text-normal;
+        }
+
+        .vili-container-header-right {
+            border-right: 0.2vh solid;
+            border-top: 0.2vh solid;
+            border-top-right-radius: 0.5vh;
+            width: 40%;
+        }
     }
 
-    .vili-container-header-middle {
+    .vili-container-content {
+        border-left: 0.2vh dashed;
+        border-right: 0.2vh dashed;
+        padding-top: 2vh;
+    }
+
+    .vili-container-footer {
+        border-style: solid;
+        border-width: 0 0.2vh 0.2vh 0.2vh;
+        border-bottom-right-radius: 0.5vh;
+        border-bottom-left-radius: 0.5vh;
         height: 3vh;
-        border-bottom: 0.2vh solid $color-node-active;
-        width: 20%;
-        margin-left: 2.5vw;
-        margin-right: 2.5vw;
-        text-align: center;
-        font-weight: bold;
-    }
-
-    .vili-container-header-right {
-        border-right: 0.2vh solid $color-node-active;
-        border-top: 0.2vh solid $color-node-active;
-        border-top-right-radius: 0.5vh;
-        width: 40%;
     }
 }
 
-.vili-container-content {
-    border-left: 0.2vh dashed $color-node-active;
-    border-right: 0.2vh dashed $color-node-active;
+.vili-container-active {
+    @extend %vili-container;
 }
 
-.vili-container-footer {
-    border-bottom: 0.2vh solid $color-node-active;
-    border-left: 0.2vh solid $color-node-active;
-    border-right: 0.2vh solid $color-node-active;
-    border-bottom-right-radius: 0.5vh;
-    border-bottom-left-radius: 0.5vh;
-    height: 3vh;
+.vili-container-inactive {
+    @extend %vili-container;
+    border-color: $color-node-inactive;
+    color: $color-node-inactive;
+}
+
+.vili-container-transition {
+    @extend %vili-container;
+    animation: transition-blink 1s infinite alternate;
+}
+
+.vili-container-disabled {
+    @extend %vili-container;
+    border-color: $color-base-disabled;
+    color: $color-base-disabled;
+    text-align: center;
 }
 
 /*** Sub-container ***/
-.vili-sub-container {
-    margin: 1vh !important;
+%vili-sub-container {
+    margin: 1vh 1vh 0 1vh !important;
     padding: 1vh;
+    color: $color-node-active;
+    border-color: $color-node-active;
 
     &:hover {
         cursor: pointer;
-        .vili-sub-header {
-            .vili-sub-header-top { border-bottom-color: $color-base-action; }
-            .vili-sub-header-status { background: $color-base-action; }
+        color: $color-text-normal;
+        .vili-sub-header { border-color: $color-text-normal; }
+        .vili-sub-content { border-color: $color-text-normal; }
+    }
+
+    .vili-sub-header {
+        text-align: center;
+        border: 0.2vh solid;
+        border-radius: 0.5vh;
+
+        &.active {
+            border-radius: 0.5vh 0.5vh 0 0;
+            border-style: dotted;
+            border-bottom-color: transparent;
         }
-        .vili-sub-content {
-            border-color: $color-base-action;
+
+        div {
+            display: inline-block;
+            background-color: $color-base-background;
+            transform: translateY(-60%);
+            padding: 1vh 2vh 1vh 2vh;
         }
     }
 
     .vili-sub-content {
+        text-align: center;
         margin-top: 3vh;
-        padding-bottom: 7vh;
-        border-left: 0.2vh dotted $color-node-active;
-        border-right: 0.2vh dotted $color-node-active;
-        border-bottom: 0.2vh dotted $color-node-active;
+        padding-bottom: 5vh;
+        border-style: dotted;
+        border-width: 0 0.2vh 0.2vh 0.2vh;
         border-bottom-right-radius: 0.5vh;
         border-bottom-left-radius: 0.5vh;
         display: none;
+
+        .uk-grid {
+            transform: translateY(-4vh);
+        }
+
+        .vili-sub-state {
+            div {
+                transform: translateY(3vh);
+                font-weight: bold;
+            }
+        }
     }
 }
 
-.vili-sub-header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
+.vili-sub-container-active {
+    @extend %vili-sub-container;
+}
 
-    .vili-sub-header-top {
-        width: 30%;
-        border-bottom: 2vh solid $color-node-active;
-        border-left: 3vh solid transparent;
-        border-right: 3vh solid transparent;
-        height: 0;
-        padding: 0;
-    }
+.vili-sub-container-inactive {
+    @extend %vili-sub-container;
+    color: $color-node-inactive;
+    border-color: $color-node-inactive;
+}
 
-    .vili-sub-header-status {
-        width: 100%;
-        height: 4vh;
-        background: $color-node-active;
-        padding: 0;
-        border-radius: 0.5vh;
-        font-size: 2em;
-        font-weight: bold;
-        text-align: center;
-    }
+.vili-sub-container-transition {
+    @extend %vili-sub-container;
+    color: $color-node-transition;
+    border-color: $color-node-transition;
+    animation: transition-blink 1s infinite alternate;
 }

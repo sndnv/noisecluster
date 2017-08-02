@@ -145,7 +145,7 @@ class System @Inject()(/*TODO - enable control: SourceService, appService: vili.
         ,
         params => {
           /* TODO - enable
-          val message: ControlMessage = (params.service, params.action) match {
+          val message: ControlMessage = (params.service.toLowerCase, params.action.toLowerCase) match {
             case ("audio", "start") => StartAudio(appService.audioFormat)
             case ("audio", "stop") => StopAudio(restart = false)
             case ("audio", "restart") => StopAudio(restart = true)
@@ -165,6 +165,8 @@ class System @Inject()(/*TODO - enable control: SourceService, appService: vili.
                 s"Unexpected service [${params.service}] and/or action [${params.action}] requested"
               )
           }
+
+          //TODO - check if node state is as expected
 
           params.target match {
             case Some("self") => control.processMessage(message)

@@ -39,6 +39,27 @@ define([],
             });
         };
 
+        Utils.prototype.getClassFromState = function (state) {
+            var states = Object.values(state);
+            var isActive = $.inArray('Active', states) > -1;
+            var isStopped = $.inArray('Stopped', states) > -1;
+            var isInTransition = (
+                $.inArray('Starting', states) > -1
+                || $.inArray('Stopping', states) > -1
+                || $.inArray('Restarting', states) > -1
+            );
+
+            if (isInTransition) {
+                return "transition";
+            } else if (isStopped) {
+                return "inactive";
+            } else if (isActive) {
+                return "active";
+            } else {
+                return "";
+            }
+        };
+
         return new Utils();
     }
 );

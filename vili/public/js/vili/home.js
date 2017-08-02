@@ -18,43 +18,6 @@ define(["utils"],
         function Home() {
         }
 
-        Home.buildButton = function (nodeName, serviceStates, label, nodeState) {
-            return $("<li></li>", {}).append(
-                $("<div></div>", {
-                    "class": "vili-button-xlarge",
-                    "click": Home.toggleAudio,
-                    "data-node-name": nodeName,
-                    "data-node-audio-state": serviceStates.audio,
-                    "data-node-state": nodeState
-                }).append(
-                    $("<div></div>", {"class": "vili-button-middle"}).append(
-                        $("<div></div>", {"class": "vili-button-inner " + nodeState}).append(
-                            $("<div></div>", {"class": "vili-button-label", "text": label})
-                        )
-                    )
-                )
-            );
-        };
-
-        Home.getClassFromState = function (state) {
-            var states = Object.values(state);
-            var isActive = $.inArray('Active', states) > -1;
-            var isStopped = $.inArray('Stopped', states) > -1;
-            var isInTransition = (
-                $.inArray('Starting', states) > -1
-                || $.inArray('Stopping', states) > -1
-                || $.inArray('Restarting', states) > -1
-            );
-
-            if (isInTransition) {
-                return "transition";
-            } else if (isStopped) {
-                return "inactive";
-            } else if (isActive) {
-                return "active"
-            }
-        };
-
         Home.toggleAudio = function (e) {
             var nodeName = $(e.currentTarget).attr("data-node-name");
             var audioState = $(e.currentTarget).attr("data-node-audio-state");
@@ -79,10 +42,26 @@ define(["utils"],
             }
 
             var requestData = {"target": nodeName, "service": "audio", "action": requestedState};
-            console.log(requestData);
             utils.postMessage(requestData).done(function (clickResult) {
-                console.log(clickResult);
+                console.log(clickResult); //TODO - ?
             });
+        };
+
+        Home.buildButton = function (nodeName, serviceStates, label, nodeState) {
+            return $("<li></li>", {})
+                .append($("<div></div>", {
+                        "class": "vili-button-xlarge",
+                        "click": Home.toggleAudio,
+                        "data-node-name": nodeName,
+                        "data-node-audio-state": serviceStates.audio,
+                        "data-node-state": nodeState
+                    })
+                    .append($("<div></div>", {"class": "vili-button-middle"})
+                        .append($("<div></div>", {"class": "vili-button-inner " + nodeState})
+                            .append($("<div></div>", {"class": "vili-button-label", "text": label}))
+                        )
+                    )
+                );
         };
 
         Home.prototype.page = function () {
@@ -93,7 +72,7 @@ define(["utils"],
                     "self",
                     result.state.localSource,
                     "src0",
-                    Home.getClassFromState(result.state.localSource)
+                    utils.getClassFromState(result.state.localSource)
                 );
 
                 nodeContainer.empty();
@@ -106,7 +85,7 @@ define(["utils"],
                             target,
                             targets[target],
                             target,
-                            Home.getClassFromState(targets[target]))
+                            utils.getClassFromState(targets[target]))
                     );
                 }
             });
