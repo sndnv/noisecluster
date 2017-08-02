@@ -22,12 +22,23 @@
 
 <!DOCTYPE html>
 <html>
-@pageHead(title)
+@pageHead(title, Seq("stylesheets/cluster.css"))
 <body>
 <div class="uk-container uk-container-expand uk-margin-medium-bottom">
     @pageNav()
     <div>
-        Cluster - @title
+        <table class="vili-cluster-members-table">
+            <thead>
+            <tr>
+                <th>Member</th>
+                <th>Address</th>
+                <th>Roles</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <br>

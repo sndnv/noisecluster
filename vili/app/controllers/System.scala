@@ -17,6 +17,7 @@ package controllers
 
 import javax.inject.Inject
 
+import akka.actor.Address
 import core3.http.controllers.noauth.ClientController
 import noisecluster.jvm.control.ServiceState
 import noisecluster.jvm.control.cluster.Messages._
@@ -30,11 +31,13 @@ import vili.ApplicationService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class   System @Inject()(/*TODO - enable control: SourceService, appService: vili.ApplicationService*/)(implicit ec: ExecutionContext, environment: Environment)
+class System @Inject()(/*TODO - enable control: SourceService, appService: vili.ApplicationService*/)(implicit ec: ExecutionContext, environment: Environment)
   extends ClientController() {
   private implicit val serviceStateWrites = Writes[ServiceState] { state => JsString(state.toString) }
   private implicit val nodeStateWrites = Json.writes[NodeState]
   private implicit val nodeInfoWrites = Json.writes[NodeInfo]
+  private implicit val akkaAddressWrites = Writes[Address] { address => JsString(address.toString) }
+  private implicit val memberInfoWrites = Json.writes[MemberInfo]
   private implicit val clusterStateWrites = Json.writes[ClusterState]
 
   def root() = PublicAction(
@@ -94,6 +97,7 @@ class   System @Inject()(/*TODO - enable control: SourceService, appService: vil
                 "application" -> "Active",
                 "host" -> "Restarting"
               ),
+              "localAddress" -> "akka.tcp://ClusterSystem@127.0.0.1:2550",
               "targets" -> Json.obj(
                 "node_01" -> Json.obj(
                   "audio" -> "Active",
@@ -109,8 +113,20 @@ class   System @Inject()(/*TODO - enable control: SourceService, appService: vil
                 ),
                 "node_03" -> Json.obj()
               ),
+              "targetAddresses" -> Json.obj(
+                "node_01" -> "akka.tcp://ClusterSystem@127.0.0.1:2551",
+                "node_02" -> "akka.tcp://ClusterSystem@127.0.0.1:2552",
+                "node_03" -> "akka.tcp://ClusterSystem@127.0.0.1:2553"
+              ),
               "pings" -> 23,
-              "pongs" -> 13
+              "pongs" -> 13,
+              "leaderAddress" -> "akka.tcp://ClusterSystem@127.0.0.1:2552",
+              "members" -> Json.arr(
+                Json.obj("address" -> "akka.tcp://ClusterSystem@127.0.0.1:2550", "roles" -> Json.arr("source"), "status" -> "Up"),
+                Json.obj("address" -> "akka.tcp://ClusterSystem@127.0.0.1:2551", "roles" -> Json.arr("a", "target", "c"), "status" -> "Up"),
+                Json.obj("address" -> "akka.tcp://ClusterSystem@127.0.0.1:2552", "roles" -> Json.arr("a", "target"), "status" -> "Up"),
+                Json.obj("address" -> "akka.tcp://ClusterSystem@127.0.0.1:2553", "roles" -> Json.arr(), "status" -> "WeaklyUp")
+              )
             )
           )
         )
