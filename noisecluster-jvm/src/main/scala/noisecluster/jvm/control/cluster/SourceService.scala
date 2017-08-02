@@ -15,7 +15,7 @@
   */
 package noisecluster.jvm.control.cluster
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Address}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -48,5 +48,34 @@ class SourceService(
 
   def processMessage(message: Messages.ControlMessage): Unit = {
     messenger ! message
+  }
+
+  private def getTargetAddressFromState(target: String): Future[Address] = {
+    getClusterState.map {
+      state =>
+        state.targetAddresses.get(target) match {
+          case Some(address) =>
+            address
+
+          case None =>
+            throw new IllegalArgumentException(s"Target node [$target] not found")
+        }
+    }
+  }
+
+  def setTargetToDown(target: String): Future[Boolean] = {
+    getTargetAddressFromState(target).map {
+      address =>
+        cluster.down(address)
+        true
+    }
+  }
+
+  def setTargetToLeaving(target: String): Future[Boolean] = {
+    getTargetAddressFromState(target).map {
+      address =>
+        cluster.leave(address)
+        true
+    }
   }
 }

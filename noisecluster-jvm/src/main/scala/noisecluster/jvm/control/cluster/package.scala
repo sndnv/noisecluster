@@ -15,6 +15,9 @@
   */
 package noisecluster.jvm.control
 
+import akka.actor.Address
+import akka.cluster.MemberStatus
+
 package object cluster {
   val SourceActorNamePrefix: String = "source_"
   val TargetActorNamePrefix: String = "target_"
@@ -31,11 +34,21 @@ package object cluster {
     lastUpdate: java.time.LocalDateTime
   )
 
+  case class MemberInfo(
+    address: Address,
+    roles: Seq[String],
+    status: String
+  )
+
   case class ClusterState(
     localSource: NodeState,
+    localAddress: Address,
     targets: Map[String, Option[NodeInfo]],
+    targetAddresses: Map[String, Address],
     pings: Int,
-    pongs: Int
+    pongs: Int,
+    leaderAddress: Option[Address],
+    members: Seq[MemberInfo]
   )
 
 }

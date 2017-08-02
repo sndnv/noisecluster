@@ -67,7 +67,21 @@ class SourceMessenger(
       }
 
     case SourceMessenger.GetClusterState() =>
-      sender ! ClusterState(getLocalState, targets, pingsSent, pongsReceived)
+      val members = clusterRef.state.members.map {
+        member =>
+          MemberInfo(member.address, member.roles.toSeq, member.status.toString)
+      }
+
+      sender ! ClusterState(
+        getLocalState,
+        self.path.address,
+        targets,
+        targetsByAddress.map(_.swap),
+        pingsSent,
+        pongsReceived,
+        clusterRef.state.leader,
+        members.toSeq
+      )
 
     //Cluster Management
     case CurrentClusterState(existingMembers, _, _, _, _) =>
