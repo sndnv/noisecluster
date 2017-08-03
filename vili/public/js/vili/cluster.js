@@ -37,7 +37,7 @@ define(["utils"],
                     .append($("<div></div>", {"class": "vili-button-middle"})
                         .append($("<div></div>", {"class": "vili-button-inner inactive"})
                             .append($("<div></div>", {"class": "vili-button-label"})
-                                .append($("<span></span>", {"uk-icon": "icon: unlock; ratio: 2"}))
+                                .append($("<span></span>", {"uk-icon": "icon: unlock;"}))
                             )
                         )
                     )
@@ -78,7 +78,7 @@ define(["utils"],
 
             return $("<tr></tr>", {})
                 .append($("<th></th>", {"text": name}))
-                .append($("<th></th>", {"text": address}))
+                .append($("<th></th>", {"class": "uk-text-meta", "text": address}))
                 .append(rolesCell)
                 .append(statusCell)
                 .append(buttonsCell);

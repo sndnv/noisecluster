@@ -26,10 +26,19 @@ define(["utils"],
             var requestedAction = $(e.currentTarget).attr("data-node-service-action");
 
             if (nodeState !== "active" && nodeState !== "inactive") {
-                console.log("Warn"); //TODO - display warning message
+                utils.showMessage(
+                    "warning",
+                    "Cannot perform action while the node is in transition",
+                    "Transition in progress"
+                );
                 return;
             } else if(serviceState !== "active" && serviceState !== "inactive") {
-                console.log("Warn"); //TODO - display warning message
+                //TODO
+                utils.showMessage(
+                    "warning",
+                    "Cannot perform action while the service is in transition",
+                    "Transition in progress"
+                );
                 return;
             }
 

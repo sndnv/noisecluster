@@ -144,39 +144,41 @@ html {
 }
 
 /*** Message ***/
+.vili-message-overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: $color-base-overlay;
+    z-index: 10;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 %vili-message-container {
     padding: 1vh;
-    min-height: 8vh;
-    max-width: 40vw;
+    height: 10vh;
+    width: 30vw;
 
-    .vili-message-header-top {
-        padding: 0;
+    .vili-message-title {
         color: $color-text-normal;
-        text-align: center;
-        font-weight: bold;
-    }
-
-    .vili-message-header-left {
-        border-bottom: 2vh solid $color-base-normal;
-        border-right: 4vh solid transparent;
-        border-top-left-radius: 0.5vh;
-    }
-
-    .vili-message-header-right {
-        border-bottom: 2vh solid $color-base-normal;
-        border-left: 4vh solid transparent;
-        border-top-right-radius: 0.5vh;
+        text-transform: uppercase;
     }
 
     .vili-message-content {
         min-height: 4vh;
         text-align: center;
         font-weight: bold;
-        color: $color-text-normal;
-        background-color: $color-base-normal;
-        border-bottom-left-radius: 0.5vh;
-        border-bottom-right-radius: 0.5vh;
+        border-radius: 0.5vh;
         padding: 1vh 0 1vh 0;
+        color: $color-base-normal;
+        background-color: $color-base-normal;
+        border: 0.2vh solid $color-base-normal;
     }
 }
 
@@ -187,20 +189,18 @@ html {
 .vili-message-warning {
     @extend %vili-message-container;
 
-    .vili-message-header-left { border-bottom-color: $color-base-warning; }
-    .vili-message-header-right { border-bottom-color: $color-base-warning; }
     .vili-message-content {
         color: $color-text-warning;
         background-color: $color-base-warning;
+        border-color: $color-base-warning;
     }
 }
 .vili-message-error {
     @extend %vili-message-container;
 
-    .vili-message-header-left { border-bottom-color: $color-base-error; }
-    .vili-message-header-right { border-bottom-color: $color-base-error; }
     .vili-message-content {
         color: $color-text-error;
         background-color: $color-base-error;
+        border-color: $color-base-error;
     }
 }

@@ -60,6 +60,21 @@ define([],
             }
         };
 
+        Utils.closeOverlay = function (e) {
+            $(e.currentTarget).closest(".vili-message-overlay").remove();
+        };
+
+        Utils.prototype.showMessage = function(type, message, title) {
+            var message = $("<div></div>", {"class": "vili-message-overlay", "click": Utils.closeOverlay})
+                .append($("<div></div>", {"class": "vili-message-" + type})
+                    .append($("<div></div>", {"class": "vili-message-content", "text": message})
+                        .prepend($("<div></div>", {"class": "vili-message-title", "text": title || type}))
+                    )
+                );
+
+            $("body").append(message);
+        };
+
         return new Utils();
     }
 );

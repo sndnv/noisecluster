@@ -24,7 +24,11 @@ define(["utils"],
             var nodeState = $(e.currentTarget).attr("data-node-state");
 
             if (nodeState === "transition") {
-                console.log("Warn"); //TODO - display warning message
+                utils.showMessage(
+                    "warning",
+                    "Cannot toggle audio while the node is in transition",
+                    "Transition in progress"
+                );
                 return;
             }
 
@@ -37,7 +41,11 @@ define(["utils"],
                     requestedState = "start";
                     break;
                 default:
-                    console.log("Err"); //TODO - display error message
+                    utils.showMessage(
+                        "error",
+                        "Cannot toggle audio before the node has initialized",
+                        "Waiting for node"
+                    );
                     return;
             }
 

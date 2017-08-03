@@ -20,13 +20,12 @@
 .vili-cluster-members-table {
     width: 70vw;
     margin: 4vh auto;
+    border: 0.2vh solid $color-base-action;
+    border-radius: 2vh;
 
     thead tr th {
-        border-bottom: 0.2vh solid $color-base-normal;
-    }
-
-    tbody tr th, tbody tr td {
-        border-bottom: 0.1vh dotted $color-node-active;
+        padding-top: 1vh;
+        color: $color-base-normal;
     }
 
     .vili-button-cell {
@@ -42,24 +41,26 @@
 
     %vili-base-label {
         display: inline-block;
-        padding: 0 0.4vw;
+        padding: 0 0.4vw 0.4vh 0.4vw;
         margin: 0.2vw;
         text-align: center;
         vertical-align: middle;
-        font-weight: bold;
+        font-weight: normal;
+        border: 0.2vh solid $color-base-normal;
+        border-radius: 1vh;
     }
 
     .vili-role-label {
         @extend %vili-base-label;
-        background-color: $color-base-normal;
     }
 
     .vili-status-label {
         @extend %vili-base-label;
+        border-color: $color-base-error;
         background-color: $color-base-error;
 
-        &.up { background-color: $color-base-normal; }
-        &.leader { background-color: $color-base-warning; }
-        &.local { background-color: $color-base-action; }
+        &.up { border-color: $color-base-normal; background-color: transparent; }
+        &.leader { border-color: $color-base-important; background-color: transparent; }
+        &.local { border-color: $color-base-warning; background-color: transparent; }
     }
 }
