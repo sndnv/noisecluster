@@ -50,12 +50,15 @@ define(["utils"],
             }
 
             var requestData = {"target": nodeName, "service": "audio", "action": requestedState};
-            utils.postMessage(requestData).done(function (clickResult) {
-                console.log(clickResult); //TODO - ?
-            });
+            utils.postMessage(requestData);
         };
 
         Home.buildButton = function (nodeName, serviceStates, label, nodeState) {
+            var buttonClass = nodeState;
+            if (nodeName === "self" && nodeState === "active") {
+                buttonClass = "important";
+            }
+
             return $("<li></li>", {})
                 .append($("<div></div>", {
                         "class": "vili-button-xlarge",
@@ -64,39 +67,47 @@ define(["utils"],
                         "data-node-audio-state": serviceStates.audio,
                         "data-node-state": nodeState
                     })
-                    .append($("<div></div>", {"class": "vili-button-middle"})
-                        .append($("<div></div>", {"class": "vili-button-inner " + nodeState})
-                            .append($("<div></div>", {"class": "vili-button-label", "text": label}))
+                        .append($("<div></div>", {"class": "vili-button-middle"})
+                            .append($("<div></div>", {"class": "vili-button-inner " + buttonClass})
+                                .append($("<div></div>", {"class": "vili-button-label", "text": label}))
+                            )
                         )
-                    )
                 );
         };
 
-        Home.prototype.page = function () {
+        Home.updateView = function () {
             var nodeContainer = $(".vili-home-node-container");
 
-            utils.getStatus().done(function (result) {
-                var localSourceButton = Home.buildButton(
-                    "self",
-                    result.state.localSource,
-                    "src0",
-                    utils.getClassFromState(result.state.localSource)
-                );
-
-                nodeContainer.empty();
-                nodeContainer.append(localSourceButton);
-
-                var targets = result.state.targets;
-                for (var target in targets) {
-                    nodeContainer.append(
-                        Home.buildButton(
-                            target,
-                            targets[target],
-                            target,
-                            utils.getClassFromState(targets[target]))
+            utils.getStatus()
+                .done(function (result) {
+                    var localSourceButton = Home.buildButton(
+                        "self",
+                        result.state.localSource,
+                        "src0",
+                        utils.getClassFromState(result.state.localSource)
                     );
-                }
-            });
+
+                    nodeContainer.empty();
+                    nodeContainer.append(localSourceButton);
+
+                    var targets = result.state.targets;
+                    for (var target in targets) {
+                        nodeContainer.append(
+                            Home.buildButton(
+                                target,
+                                targets[target],
+                                target,
+                                utils.getClassFromState(targets[target]))
+                        );
+                    }
+                })
+                .always(function () {
+                    setTimeout(Home.updateView, 4000);
+                });
+        };
+
+        Home.prototype.page = function () {
+            Home.updateView();
         };
 
         return new Home();

@@ -8,4 +8,5 @@ GET     /home                                   controllers.System.home
 GET     /nodes                                  controllers.System.nodes
 GET     /cluster                                controllers.System.cluster
 GET     /status                                 controllers.System.status
-POST    /process                                controllers.System.processMessage
+POST    /process-message                        controllers.System.processMessage
+POST    /process-cluster-action                 controllers.System.processClusterAction

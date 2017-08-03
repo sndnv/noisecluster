@@ -53,6 +53,7 @@ html {
 }
 
 %vili-button-outer-base {
+    backface-visibility: hidden;
     &:hover {
         cursor: pointer;
         .vili-button-inner {

@@ -74,7 +74,7 @@ class SourceMessenger(
 
       sender ! ClusterState(
         getLocalState,
-        self.path.address,
+        clusterRef.selfAddress,
         targets,
         targetsByAddress.map(_.swap),
         pingsSent,

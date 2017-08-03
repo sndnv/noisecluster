@@ -21,8 +21,8 @@ define(["utils"],
         Nodes.sendMessage = function (e) {
             var nodeName = $(e.currentTarget).attr("data-node-name");
             var nodeState = $(e.currentTarget).attr("data-node-state");
+            var buttonState = $(e.currentTarget).attr("data-node-button-state");
             var serviceName = $(e.currentTarget).attr("data-node-service-name");
-            var serviceState = $(e.currentTarget).attr("data-node-service-state");
             var requestedAction = $(e.currentTarget).attr("data-node-service-action");
 
             if (nodeState !== "active" && nodeState !== "inactive") {
@@ -32,50 +32,47 @@ define(["utils"],
                     "Transition in progress"
                 );
                 return;
-            } else if(serviceState !== "active" && serviceState !== "inactive") {
-                //TODO
+            } else if (buttonState !== "active") {
                 utils.showMessage(
-                    "warning",
-                    "Cannot perform action while the service is in transition",
-                    "Transition in progress"
+                    "error",
+                    "This action is not valid for the current service state",
+                    "Not Available"
                 );
                 return;
             }
 
             var requestData = {"target": nodeName, "service": serviceName, "action": requestedAction};
-            utils.postMessage(requestData).done(function (clickResult) {
-                console.log(clickResult); //TODO - ?
-            });
+            utils.postMessage(requestData);
         };
 
-        Nodes.buildButton = function(nodeName, nodeState, serviceName, requestedAction, serviceState, icon) {
+        Nodes.buildButton = function (nodeName, nodeState, serviceName, requestedAction, buttonState, icon) {
             return $("<div></div>", {})
                 .append($("<div></div>", {
                         "class": "vili-button-large",
                         "click": Nodes.sendMessage,
                         "data-node-name": nodeName,
                         "data-node-state": nodeState,
+                        "data-node-button-state": buttonState,
                         "data-node-service-name": serviceName,
-                        "data-node-service-state": serviceState,
                         "data-node-service-action": requestedAction
                     })
-                    .append($("<div></div>", {"class": "vili-button-middle"})
-                        .append($("<div></div>", {"class": "vili-button-inner " + serviceState})
-                            .append($("<div></div>", {"class": "vili-button-label"})
-                                .append($("<span></span>", {"uk-icon": "icon: " + icon + "; ratio: 2"}))
+                        .append($("<div></div>", {"class": "vili-button-middle"})
+                            .append($("<div></div>", {"class": "vili-button-inner " + buttonState})
+                                .append($("<div></div>", {"class": "vili-button-label"})
+                                    .append($("<span></span>", {"uk-icon": "icon: " + icon + "; ratio: 2"}))
+                                )
                             )
                         )
-                    )
                 );
         };
 
-        Nodes.buildSubContainer = function(nodeName, nodeState, serviceName, serviceState) {
+        Nodes.buildSubContainer = function (nodeName, nodeState, serviceName, serviceState) {
             var subContainerState = "";
             var startButtonState = "";
             var stopButtonState = "";
             var restartButtonState = "";
 
-            switch(serviceState) {
+            switch (serviceState) {
                 case 'Active':
                     subContainerState = "active";
                     startButtonState = "";
@@ -109,10 +106,10 @@ define(["utils"],
                 );
         };
 
-        Nodes.buildContainer = function(nodeName, serviceStates) {
+        Nodes.buildContainer = function (nodeName, serviceStates) {
             var containerState = "";
             var containerContent;
-            if(!jQuery.isEmptyObject(serviceStates)) {
+            if (!jQuery.isEmptyObject(serviceStates)) {
                 containerState = utils.getClassFromState(serviceStates);
                 containerContent =
                     $("<div></div>", {"class": "vili-container-content"})
@@ -127,11 +124,16 @@ define(["utils"],
                         .append($("<div></div>", {"text": "Waiting for data..."}));
             }
 
+            var displayName = nodeName;
+            if (nodeName === "self") {
+                displayName = "src0";
+            }
+
             return $("<div></div>", {"class": "uk-width-1-3"})
                 .append($("<div></div>", {"class": "vili-container-" + containerState})
                     .append($("<div></div>", {"class": "vili-container-header"})
                         .append($("<div></div>", {"class": "vili-container-header-left"}))
-                        .append($("<div></div>", {"class": "vili-container-header-middle", "text": nodeName}))
+                        .append($("<div></div>", {"class": "vili-container-header-middle", "text": displayName}))
                         .append($("<div></div>", {"class": "vili-container-header-right"}))
                     )
                     .append(containerContent)
@@ -139,7 +141,7 @@ define(["utils"],
                 );
         };
 
-        Nodes.prototype.page = function () {
+        Nodes.updateView = function () {
             var nodeContainer = $(".vili-nodes-node-container");
 
             nodeContainer.on("click", ".vili-sub-header", function (e) {
@@ -148,25 +150,30 @@ define(["utils"],
                 target.next().toggle({"duration": 0});
             });
 
-            utils.getStatus().done(function (result) {
-                var localSourceContainer = Nodes.buildContainer(
-                    "src0",
-                    result.state.localSource
-                );
-
-                nodeContainer.empty();
-                nodeContainer.append(localSourceContainer);
-
-                var targets = result.state.targets;
-                for (var target in targets) {
-                    nodeContainer.append(
-                        Nodes.buildContainer(
-                            target,
-                            targets[target]
-                        )
+            utils.getStatus()
+                .done(function (result) {
+                    var localSourceContainer = Nodes.buildContainer(
+                        "self",
+                        result.state.localSource
                     );
-                }
-            });
+
+                    nodeContainer.empty();
+                    nodeContainer.append(localSourceContainer);
+
+                    var targets = result.state.targets;
+                    for (var target in targets) {
+                        nodeContainer.append(
+                            Nodes.buildContainer(
+                                target,
+                                targets[target]
+                            )
+                        );
+                    }
+                });
+        };
+
+        Nodes.prototype.page = function () {
+            Nodes.updateView();
         };
 
         return new Nodes();

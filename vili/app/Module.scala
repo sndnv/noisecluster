@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class Module extends AbstractModule {
 
   override def configure(): Unit = {
-    //TODO - bind(classOf[ControlStart]).to(classOf[ControlStartImpl]).asEagerSingleton()
+    bind(classOf[ControlStart]).to(classOf[ControlStartImpl]).asEagerSingleton()
   }
 
   @Provides

@@ -19,6 +19,26 @@ define([],
         function Utils() {
         }
 
+        Utils.post = function (uri, data) {
+            var headers = {
+                "Csrf-Token": $("#csrfToken").attr("data-token-value")
+            };
+
+            return $.ajax({
+                type: "POST",
+                url: uri,
+                headers: headers,
+                data: data
+            })
+                .done(function (result) {
+                    window.location.reload();
+                })
+                .fail(function (xhr, status, error) {
+                    console.error("Operation failed with status [" + xhr.status + "] and message [" + error + " / " + xhr.responseText + "]");
+                    Utils.prototype.showMessage("error", xhr.responseText, error);
+                });
+        };
+
         Utils.prototype.getStatus = function () {
             return $.ajax({
                 type: "GET",
@@ -27,16 +47,11 @@ define([],
         };
 
         Utils.prototype.postMessage = function (data) {
-            var headers = {
-                "Csrf-Token": $("#csrfToken").attr("data-token-value")
-            };
+            return Utils.post("/process-message", data);
+        };
 
-            return $.ajax({
-                type: "POST",
-                url: "/process",
-                headers: headers,
-                data: data
-            });
+        Utils.prototype.postClusterAction = function (data) {
+            return Utils.post("/process-cluster-action", data);
         };
 
         Utils.prototype.getClassFromState = function (state) {
@@ -64,15 +79,15 @@ define([],
             $(e.currentTarget).closest(".vili-message-overlay").remove();
         };
 
-        Utils.prototype.showMessage = function(type, message, title) {
-            var message = $("<div></div>", {"class": "vili-message-overlay", "click": Utils.closeOverlay})
-                .append($("<div></div>", {"class": "vili-message-" + type})
-                    .append($("<div></div>", {"class": "vili-message-content", "text": message})
-                        .prepend($("<div></div>", {"class": "vili-message-title", "text": title || type}))
+        Utils.prototype.showMessage = function (type, message, title) {
+            $("body")
+                .append($("<div></div>", {"class": "vili-message-overlay", "click": Utils.closeOverlay})
+                    .append($("<div></div>", {"class": "vili-message-" + type})
+                        .append($("<div></div>", {"class": "vili-message-content", "text": message})
+                            .prepend($("<div></div>", {"class": "vili-message-title", "text": title || type}))
+                        )
                     )
                 );
-
-            $("body").append(message);
         };
 
         return new Utils();

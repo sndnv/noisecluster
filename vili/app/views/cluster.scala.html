@@ -17,13 +17,19 @@
 @import views.html.components.pageHead
 @import views.html.components.pageNav
 @import views.html.components.pageJs
+@import play.filters.csrf.CSRF
 
-@(title: String)(implicit environment: play.api.Environment, request: play.api.mvc.RequestHeader)
+@(title: String)(implicit environment: play.api.Environment, request: play.api.mvc.RequestHeader, csrfToken: Option[CSRF.Token])
 
 <!DOCTYPE html>
 <html>
 @pageHead(title, Seq("stylesheets/cluster.css"))
 <body>
+
+@for(token <- csrfToken) {
+    <div id="csrfToken" data-token-name="@{token.name}" data-token-value="@{token.value}"></div>
+}
+
 <div class="uk-container uk-container-expand uk-margin-medium-bottom">
     @pageNav()
     <div>
