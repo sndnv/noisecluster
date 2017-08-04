@@ -75,8 +75,14 @@ class SourceMessenger(
       sender ! ClusterState(
         getLocalState,
         clusterRef.selfAddress,
-        targets,
-        targetsByAddress.map(_.swap),
+        targets.map {
+          case (name, info) =>
+            (name.split(TargetActorNamePrefix).last, info)
+        },
+        targetsByAddress.map {
+          case (address, name) =>
+            (name.split(TargetActorNamePrefix).last, address)
+        },
         pingsSent,
         pongsReceived,
         clusterRef.state.leader,

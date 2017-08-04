@@ -24,6 +24,8 @@ import io.aeron.logbuffer._
 import org.agrona.DirectBuffer
 import org.agrona.concurrent._
 
+import scala.concurrent.{ExecutionContext, Future}
+
 class Target(
   private val stream: Int,
   private val channel: String,
@@ -47,18 +49,19 @@ class Target(
 
   def isActive: Boolean = isRunning.get
 
-  //docs - warn about blocking
-  def start(): Unit = {
+  def start()(implicit ec: ExecutionContext): Unit = {
     if (isRunning.compareAndSet(false, true)) {
       log.info("Starting transport for channel [{}] and stream [{}]", channel, stream)
 
-      //will block until stopped
-      while (isRunning.get) {
-        val fragmentsRead = subscription.poll(fragmentAssembler, fragmentLimit)
-        idleStrategy.idle(fragmentsRead)
-      }
+      Future {
+        //will block until stopped
+        while (isRunning.get) {
+          val fragmentsRead = subscription.poll(fragmentAssembler, fragmentLimit)
+          idleStrategy.idle(fragmentsRead)
+        }
 
-      log.info("Stopped transport for channel [{}] and stream [{}]", channel, stream)
+        log.info("Stopped transport for channel [{}] and stream [{}]", channel, stream)
+      }
     } else {
       val message = s"Cannot start transport for channel [$channel] and stream [$stream]; transport is already active"
       log.warning(message)
