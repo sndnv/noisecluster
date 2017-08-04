@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using Adaptive.Aeron;
+using log4net.Config;
 using noisecluster.win.audio;
 using noisecluster.win.audio.capture;
 using noisecluster.win.transport.aeron;
@@ -33,7 +34,7 @@ namespace noisecluster.win.interop
         public SourceService(Aeron.Context systemContext, int stream, string address, int port, int bufferSize,
             string @interface = null)
         {
-            //TODO - setup logging
+            BasicConfigurator.Configure();
             _aeron = Aeron.Connect(systemContext);
 
             _transport = string.IsNullOrEmpty(@interface)
