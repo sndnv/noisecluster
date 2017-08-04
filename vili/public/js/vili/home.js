@@ -95,9 +95,9 @@ define(["utils"],
                         nodeContainer.append(
                             Home.buildButton(
                                 target,
-                                targets[target],
+                                targets[target].state,
                                 target,
-                                utils.getClassFromState(targets[target]))
+                                utils.getClassFromState(targets[target].state))
                         );
                     }
                 })

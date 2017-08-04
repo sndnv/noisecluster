@@ -165,7 +165,7 @@ define(["utils"],
                         nodeContainer.append(
                             Nodes.buildContainer(
                                 target,
-                                targets[target]
+                                targets[target].state
                             )
                         );
                     }
