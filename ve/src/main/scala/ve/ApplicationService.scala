@@ -15,10 +15,13 @@
   */
 package ve
 
+import javax.sound.sampled.AudioFormat
+
 import akka.actor.ActorSystem
 import com.typesafe.config.Config
 import io.aeron.Aeron
 import io.aeron.driver.MediaDriver
+import noisecluster.jvm.audio
 import noisecluster.jvm.audio.AudioFormatContainer
 import noisecluster.jvm.audio.render.ByteStreamPlayer
 import noisecluster.jvm.control.LocalHandlers
@@ -53,7 +56,9 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
           case None =>
             formatContainer match {
               case Some(format) =>
-                audioOpt = Some(ByteStreamPlayer(format.toAudioFormat))
+                val audio = ByteStreamPlayer(new AudioFormat(36000, 16, 2, true, false))
+                audioOpt = Some(audio)
+                audio.start()
 
               case None =>
                 throw new IllegalArgumentException("Cannot start audio; no format specified")
@@ -95,8 +100,8 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
                     Target(stream, address, port, audio.write)
                 }
 
-                target.start()
                 transportOpt = Some(target)
+                target.start()
             }
 
           case None =>
