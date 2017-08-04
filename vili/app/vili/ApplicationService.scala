@@ -17,13 +17,14 @@ package vili
 
 import akka.actor.ActorSystem
 import com.typesafe.config.Config
-import noisecluster.jvm.audio.AudioFormatContainer
+import noisecluster.jvm.audio.{AudioFormatContainer, Defaults}
 import noisecluster.jvm.control.LocalHandlers
+import noisecluster.win.interop.SourceService
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: ActorSystem) {
+class ApplicationService(config: Config, interop: SourceService)(implicit ec: ExecutionContext, system: ActorSystem) {
   private val stream: Int = config.getInt("transport.stream")
   private val address: String = config.getString("transport.address")
   private val port: Int = config.getInt("transport.port")
@@ -33,32 +34,28 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
   val localHandlers = new LocalHandlers {
     override def startAudio(formatContainer: Option[AudioFormatContainer]): Future[Boolean] = {
       Future {
-        //TODO - add JNI call
-
+        interop.StartAudio()
         true
       }
     }
 
     override def stopAudio(restart: Boolean): Future[Boolean] = {
       Future {
-        //TODO - add JNI call
-
+        interop.StopAudio(restart)
         true
       }
     }
 
     override def startTransport(): Future[Boolean] = {
       Future {
-        //TODO - add JNI call
-
+        interop.StartTransport()
         true
       }
     }
 
     override def stopTransport(restart: Boolean): Future[Boolean] = {
       Future {
-        //TODO - add JNI call
-
+        interop.StopTransport(restart)
         true
       }
     }
@@ -86,11 +83,25 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
   }
 
   def audioFormat: Option[AudioFormatContainer] = {
-    //TODO - implement
-    None
+    val interopFormat = interop.getTargetFormat
+    val targetFormat = AudioFormatContainer(
+      interopFormat.getEncoding,
+      interopFormat.getSampleRate,
+      interopFormat.getSampleSizeInBits,
+      interopFormat.getChannels,
+      interopFormat.getFrameSize,
+      interopFormat.getFrameRate,
+      interopFormat.getBigEndian
+    )
+    val wasapiFormat = Defaults.WasapiAudioFormat
+
+    //TODO - remove debugging
+    println(interopFormat, targetFormat, wasapiFormat)
+    Some(targetFormat)
   }
 
   def shutdown(): Unit = {
-    //TODO - implement
+    interop.StopAudio(false)
+    interop.StopTransport(false)
   }
 }

@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using Adaptive.Aeron;
+using noisecluster.win.audio;
 using noisecluster.win.audio.capture;
 using noisecluster.win.transport.aeron;
 
@@ -103,6 +104,40 @@ namespace noisecluster.win.interop
             if (restart)
             {
                 Interlocked.Exchange(ref _isTransportRunning, 1);
+            }
+        }
+
+        public AudioFormatContainer SourceFormat
+        {
+            get
+            {
+                var format = _audio.SourceFormat;
+                return new AudioFormatContainer(
+                    format.WaveFormatTag.ToString(),
+                    format.SampleRate,
+                    format.BitsPerSample,
+                    format.Channels,
+                    ((format.BitsPerSample + 7) / 8) * format.Channels,
+                    format.SampleRate,
+                    false
+                );
+            }
+        }
+
+        public AudioFormatContainer TargetFormat
+        {
+            get
+            {
+                var format = _audio.TargetFormat;
+                return new AudioFormatContainer(
+                    format.WaveFormatTag.ToString(),
+                    format.SampleRate,
+                    format.BitsPerSample,
+                    format.Channels,
+                    ((format.BitsPerSample + 7) / 8) * format.Channels,
+                    format.SampleRate,
+                    false
+                );
             }
         }
 

@@ -14,13 +14,17 @@
   * limitations under the License.
   */
 
+import java.io.File
+
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.Timeout
 import com.google.inject.{AbstractModule, Provides, Singleton}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import core3.http.filters.{CompressionFilter, MaintenanceModeFilter, MetricsFilter, TraceFilter}
-import noisecluster.jvm.control.cluster.SourceService
+import net.sf.jni4net.Bridge
+import noisecluster.jvm.control.cluster
+import noisecluster.win.interop
 import play.api.inject.ApplicationLifecycle
 import vili.ApplicationService
 
@@ -56,17 +60,42 @@ class Module extends AbstractModule {
 
   @Provides
   @Singleton
-  def provideApplicationService(lifecycle: ApplicationLifecycle)(implicit ec: ExecutionContext, system: ActorSystem): ApplicationService = {
-    //implicit val system = ActorSystem("vili")
+  def provideInteropService(lifecycle: ApplicationLifecycle): interop.SourceService = {
+    val baseConfig = ConfigFactory.load()
+    val appConfig = baseConfig.getConfig("noisecluster.vili")
+
+    Bridge.setVerbose(true)
+    Bridge.init()
+    Bridge.LoadAndRegisterAssemblyFrom(new File(appConfig.getString("interopDllPath")))
+
+    val service = new interop.SourceService(
+      appConfig.getInt("transport.stream"),
+      appConfig.getString("transport.address"),
+      appConfig.getInt("transport.port"),
+      if (appConfig.hasPath("transport.interface")) appConfig.getString("transport.interface") else null
+    )
+
+    lifecycle.addStopHook { () => Future.successful(service.Dispose()) }
+
+    service
+  }
+
+  @Provides
+  @Singleton
+  def provideApplicationService(
+    lifecycle: ApplicationLifecycle,
+    interopService: interop.SourceService
+  )(implicit ec: ExecutionContext, system: ActorSystem): ApplicationService = {
+    //TODO - ? implicit val system = ActorSystem("vili")
     val appConfig = ConfigFactory.load().getConfig("noisecluster.vili")
-    val service = new ApplicationService(appConfig)
+    val service = new ApplicationService(appConfig, interopService)
     lifecycle.addStopHook { () => Future.successful(service.shutdown()) }
     service
   }
 
   @Provides
   @Singleton
-  def provideControlService(appService: ApplicationService)(implicit ec: ExecutionContext): SourceService = {
+  def provideControlService(appService: ApplicationService)(implicit ec: ExecutionContext): cluster.SourceService = {
     val baseConfig = ConfigFactory.load()
     val appConfig = baseConfig.getConfig("noisecluster.vili")
 
@@ -86,7 +115,7 @@ class Module extends AbstractModule {
 
     implicit val timeout = Timeout(appConfig.getInt("actionTimeout").seconds)
 
-    new SourceService(
+    new cluster.SourceService(
       systemName = appConfig.getString("control.systemName"),
       messengerName = appConfig.getString("control.messengerName"),
       pingInterval = appConfig.getInt("control.pingInterval").seconds,
