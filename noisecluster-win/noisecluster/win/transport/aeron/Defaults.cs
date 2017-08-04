@@ -22,7 +22,9 @@ namespace noisecluster.win.transport.aeron
     public static class Defaults
     {
         public static int FragmentLimit = 10;
-        public static int BufferSize = 4096;
+        public static int BufferSizeSmall = 4*1024;
+        public static int BufferSize = 16*1024;
+        public static int BufferSizeLarge = 64*1024;
 
         public static IIdleStrategy IdleStrategy = new SpinWaitIdleStrategy();
 

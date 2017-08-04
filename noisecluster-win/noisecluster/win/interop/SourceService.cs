@@ -46,7 +46,7 @@ namespace noisecluster.win.interop
             _audio = new WasapiRecorder(
                 (data, length) =>
                 {
-                    if (_isTransportRunning == 1)
+                    if (_isTransportRunning == 1 && _transport.IsConnected)
                     {
                         _transport.Send(data, 0, length);
                     }
@@ -72,6 +72,16 @@ namespace noisecluster.win.interop
         public bool IsTransportActive
         {
             get { return _isTransportRunning == 1; }
+        }
+
+        public bool IsTransportConnected
+        {
+            get { return _transport.IsConnected; }
+        }
+
+        public bool IsTransportClosed
+        {
+            get { return _transport.IsClosed; }
         }
 
         public void StartAudio()

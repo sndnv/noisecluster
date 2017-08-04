@@ -21,6 +21,7 @@ import akka.actor.ActorSystem
 import com.typesafe.config.Config
 import io.aeron.Aeron
 import io.aeron.driver.MediaDriver
+import noisecluster.jvm
 import noisecluster.jvm.audio
 import noisecluster.jvm.audio.AudioFormatContainer
 import noisecluster.jvm.audio.render.ByteStreamPlayer
@@ -56,7 +57,7 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
           case None =>
             formatContainer match {
               case Some(format) =>
-                val audio = ByteStreamPlayer(new AudioFormat(36000, 16, 2, true, false))
+                val audio = ByteStreamPlayer(jvm.audio.Defaults.WasapiAudioFormat) //TODO - update to supplied value
                 audioOpt = Some(audio)
                 audio.start()
 

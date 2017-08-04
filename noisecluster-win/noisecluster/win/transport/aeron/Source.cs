@@ -58,6 +58,16 @@ namespace noisecluster.win.transport.aeron
         {
         }
 
+        public bool IsConnected
+        {
+            get { return _publication.IsConnected; }
+        }
+
+        public bool IsClosed
+        {
+            get { return _publication.IsClosed; }
+        }
+
         private long Offer(int messageSize)
         {
             var result = _publication.Offer(_buffer, 0, messageSize);
