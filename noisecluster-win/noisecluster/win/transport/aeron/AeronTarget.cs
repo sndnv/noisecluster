@@ -22,9 +22,9 @@ using log4net;
 
 namespace noisecluster.win.transport.aeron
 {
-    public class Target : IDisposable
+    public class AeronTarget : IDisposable
     {
-        private readonly ILog _log = LogManager.GetLogger(typeof(Target));
+        private readonly ILog _log = LogManager.GetLogger(typeof(AeronTarget));
         private int _isRunning; //0 = false; 1 = true
         private readonly int _stream;
         private readonly string _channel;
@@ -39,7 +39,7 @@ namespace noisecluster.win.transport.aeron
 
         public delegate void DataHandler(byte[] data, int length);
 
-        public Target(
+        public AeronTarget(
             Aeron aeron,
             int stream,
             string channel,

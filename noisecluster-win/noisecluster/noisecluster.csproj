@@ -61,8 +61,8 @@
     <Compile Include="win\test\transport\aeron\BasicSpec.cs" />
     <Compile Include="win\test\Utils.cs" />
     <Compile Include="win\transport\aeron\Defaults.cs" />
-    <Compile Include="win\transport\aeron\Source.cs" />
-    <Compile Include="win\transport\aeron\Target.cs" />
+    <Compile Include="win\transport\aeron\AeronSource.cs" />
+    <Compile Include="win\transport\aeron\AeronTarget.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

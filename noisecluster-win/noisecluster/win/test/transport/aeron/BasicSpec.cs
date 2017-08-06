@@ -29,12 +29,12 @@ namespace noisecluster.win.test.transport.aeron
         private long _testDataSent;
         private long _testDataReceived;
 
-        private readonly Target.DataHandler _testDataHandler;
+        private readonly AeronTarget.DataHandler _testDataHandler;
 
         private readonly Aeron _aeron;
 
-        private readonly Source _source;
-        private readonly Target _target;
+        private readonly AeronSource _source;
+        private readonly AeronTarget _target;
 
         private readonly int _testByteArraySize;
 
@@ -53,8 +53,8 @@ namespace noisecluster.win.test.transport.aeron
             const int stream = 42;
             _aeron = Aeron.Connect(Defaults.GetNewSystemContext());
 
-            _source = new Source(_aeron, stream, channel, Defaults.BufferSize);
-            _target = new Target(_aeron, stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit);
+            _source = new AeronSource(_aeron, stream, channel, Defaults.BufferSize);
+            _target = new AeronTarget(_aeron, stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit);
 
             _testByteArraySize = 1000;
 

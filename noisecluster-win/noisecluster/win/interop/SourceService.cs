@@ -34,7 +34,7 @@ namespace noisecluster.win.interop
         private readonly ILog _log = LogManager.GetLogger(typeof(SourceService));
         private readonly Aeron _aeron;
         private WasapiRecorder _audio;
-        private Source _transport;
+        private AeronSource _transport;
         private int _isTransportRunning; //0 = false; 1 = true
         private readonly WasapiRecorder.DataHandler _dataHandler;
 
@@ -144,8 +144,8 @@ namespace noisecluster.win.interop
             if (Interlocked.CompareExchange(ref _isTransportRunning, 1, 0) != 0) return false;
 
             _transport = string.IsNullOrEmpty(_interface)
-                ? new Source(_aeron, _stream, _address, _port, _bufferSize)
-                : new Source(_aeron, _stream, _address, _port, _interface, _bufferSize);
+                ? new AeronSource(_aeron, _stream, _address, _port, _bufferSize)
+                : new AeronSource(_aeron, _stream, _address, _port, _interface, _bufferSize);
             return true;
         }
 
