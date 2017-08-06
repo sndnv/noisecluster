@@ -15,19 +15,17 @@
   */
 package noisecluster.jvm.control.cluster
 
-import noisecluster.jvm.audio.AudioFormatContainer
-
 object Messages {
 
   sealed trait ControlMessage
 
-  case class StartAudio(formatContainer: Option[AudioFormatContainer]) extends ControlMessage
+  case class StartAudio() extends ControlMessage
 
-  case class StopAudio(restart: Boolean) extends ControlMessage
+  case class StopAudio() extends ControlMessage
 
   case class StartTransport() extends ControlMessage
 
-  case class StopTransport(restart: Boolean) extends ControlMessage
+  case class StopTransport() extends ControlMessage
 
   case class StopApplication(restart: Boolean) extends ControlMessage
 

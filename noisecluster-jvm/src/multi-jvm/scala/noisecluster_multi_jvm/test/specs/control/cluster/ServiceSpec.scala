@@ -19,7 +19,6 @@ import akka.remote.testconductor.RoleName
 import akka.remote.testkit._
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
-import noisecluster.jvm.audio.AudioFormatContainer
 import noisecluster.jvm.control.cluster._
 import noisecluster.jvm.control.{LocalHandlers, ServiceState}
 import noisecluster.jvm.test.utils._
@@ -53,17 +52,15 @@ object ServiceTestConfig extends MultiNodeConfig {
   var calls_total: Int = 0
   var calls_startAudio: Int = 0
   var calls_stopAudio: Int = 0
-  var calls_restartAudio: Int = 0
   var calls_startTransport: Int = 0
   var calls_stopTransport: Int = 0
-  var calls_restartTransport: Int = 0
   var calls_stopApplication: Int = 0
   var calls_restartApplication: Int = 0
   var calls_stopHost: Int = 0
   var calls_restartHost: Int = 0
 
   val testHandlers: LocalHandlers = new LocalHandlers {
-    override def startAudio(formatContainer: Option[AudioFormatContainer]): Future[Boolean] = {
+    override def startAudio(): Future[Boolean] = {
       calls_total += 1
       calls_startAudio += 1
       Future.successful(true)
@@ -83,10 +80,9 @@ object ServiceTestConfig extends MultiNodeConfig {
       Future.successful(true)
     }
 
-    override def stopAudio(restart: Boolean): Future[Boolean] = {
+    override def stopAudio(): Future[Boolean] = {
       calls_total += 1
-      if (restart) calls_restartAudio += 1
-      else calls_stopAudio += 1
+      calls_stopAudio += 1
 
       Future.successful(true)
     }
@@ -99,10 +95,9 @@ object ServiceTestConfig extends MultiNodeConfig {
       Future.successful(true)
     }
 
-    override def stopTransport(restart: Boolean): Future[Boolean] = {
+    override def stopTransport(): Future[Boolean] = {
       calls_total += 1
-      if (restart) calls_restartTransport += 1
-      else calls_stopTransport += 1
+      calls_stopTransport += 1
 
       Future.successful(true)
     }
@@ -168,12 +163,12 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
     "successfully have targets accept commands from a source" in {
       if (myself == sourceNode) {
         val sourceService = service.asInstanceOf[SourceService]
-        sourceService.forwardMessage(targetNode1.name, Messages.StartAudio(None))
-        sourceService.forwardMessage(targetNode2.name, Messages.StopAudio(restart = false))
-        sourceService.forwardMessage(Messages.StopAudio(restart = true))
+        sourceService.forwardMessage(targetNode1.name, Messages.StartAudio())
+        sourceService.forwardMessage(targetNode2.name, Messages.StopAudio())
+        sourceService.forwardMessage(Messages.StopAudio())
         sourceService.forwardMessage(targetNode1.name, Messages.StartTransport())
         sourceService.forwardMessage(targetNode2.name, Messages.StartTransport())
-        sourceService.forwardMessage(Messages.StopTransport(restart = true))
+        sourceService.forwardMessage(Messages.StopTransport())
         sourceService.forwardMessage(targetNode1.name, Messages.StopApplication(restart = false))
         sourceService.forwardMessage(targetNode2.name, Messages.StopApplication(restart = true))
         sourceService.forwardMessage(Messages.StopHost(restart = true))
@@ -189,12 +184,10 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
 
       myself match {
         case x if x == sourceNode =>
-          calls_startAudio should be(1)
+          calls_startAudio should be(0)
           calls_stopAudio should be(0)
-          calls_restartAudio should be(0)
-          calls_startTransport should be(1)
+          calls_startTransport should be(0)
           calls_stopTransport should be(0)
-          calls_restartTransport should be(0)
           calls_stopApplication should be(0)
           calls_restartApplication should be(0)
           calls_stopHost should be(0)
@@ -202,11 +195,9 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
 
         case x if x == targetNode1 =>
           calls_startAudio should be(1)
-          calls_stopAudio should be(0)
-          calls_restartAudio should be(1)
+          calls_stopAudio should be(1)
           calls_startTransport should be(1)
-          calls_stopTransport should be(0)
-          calls_restartTransport should be(1)
+          calls_stopTransport should be(1)
           calls_stopApplication should be(1)
           calls_restartApplication should be(0)
           calls_stopHost should be(0)
@@ -214,11 +205,9 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
 
         case x if x == targetNode2 =>
           calls_startAudio should be(0)
-          calls_stopAudio should be(1)
-          calls_restartAudio should be(1)
+          calls_stopAudio should be(2)
           calls_startTransport should be(1)
-          calls_stopTransport should be(0)
-          calls_restartTransport should be(1)
+          calls_stopTransport should be(1)
           calls_stopApplication should be(0)
           calls_restartApplication should be(1)
           calls_stopHost should be(0)
@@ -235,8 +224,8 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
 
           service.asInstanceOf[SourceService].getClusterState.map {
             state =>
-              state.localSource.audio should be(ServiceState.Active)
-              state.localSource.transport should be(ServiceState.Active)
+              state.localSource.audio should be(ServiceState.Stopped)
+              state.localSource.transport should be(ServiceState.Stopped)
               state.localSource.application should be(ServiceState.Active)
               state.localSource.host should be(ServiceState.Active)
 
@@ -250,46 +239,9 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
 
         case x if x == targetNode2 => succeed
       }
-    }
 
-    "stop sources from sending data when no targets are available" in {
-      enterBarrier("pre-test-03")
-
-      runOn(targetNode1, targetNode2) {
-        shutdown(system)
-      }
-
-      myself match {
-        case x if x == sourceNode =>
-          waitUntil(what = "all messages have been processed", waitTimeMs = 1000, waitAttempts = 15) {
-            calls_total == 4
-          }
-
-          calls_startAudio should be(1)
-          calls_stopAudio should be(1)
-          calls_restartAudio should be(0)
-          calls_startTransport should be(1)
-          calls_stopTransport should be(1)
-          calls_restartTransport should be(0)
-          calls_stopApplication should be(0)
-          calls_restartApplication should be(0)
-          calls_stopHost should be(0)
-          calls_restartHost should be(0)
-
-          service.asInstanceOf[SourceService].getClusterState.map {
-            state =>
-              state.localSource.audio should be(ServiceState.Stopped)
-              state.localSource.transport should be(ServiceState.Stopped)
-              state.localSource.application should be(ServiceState.Active)
-              state.localSource.host should be(ServiceState.Active)
-
-              state.targets.keys.size should be(0)
-          }
-
-        case x if x == targetNode1 => succeed
-
-        case x if x == targetNode2 => succeed
-      }
+      enterBarrier("post-test-03")
+      succeed
     }
   }
 }

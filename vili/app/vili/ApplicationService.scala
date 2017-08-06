@@ -17,7 +17,6 @@ package vili
 
 import akka.actor.ActorSystem
 import com.typesafe.config.Config
-import noisecluster.jvm.audio.{AudioFormatContainer, Defaults}
 import noisecluster.jvm.control.LocalHandlers
 import noisecluster.win.interop.SourceService
 
@@ -32,31 +31,43 @@ class ApplicationService(config: Config, interop: SourceService)(implicit ec: Ex
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
 
   val localHandlers = new LocalHandlers {
-    override def startAudio(formatContainer: Option[AudioFormatContainer]): Future[Boolean] = {
+    override def startAudio(): Future[Boolean] = {
       Future {
-        interop.StartAudio()
-        true
+        if (interop.StartAudio()) {
+          true
+        } else {
+          throw new IllegalStateException("Failed to start audio capture")
+        }
       }
     }
 
-    override def stopAudio(restart: Boolean): Future[Boolean] = {
+    override def stopAudio(): Future[Boolean] = {
       Future {
-        interop.StopAudio(restart)
-        true
+        if (interop.StopAudio()) {
+          true
+        } else {
+          throw new IllegalStateException("Failed to stop audio capture")
+        }
       }
     }
 
     override def startTransport(): Future[Boolean] = {
       Future {
-        interop.StartTransport()
-        true
+        if (interop.StartTransport()) {
+          true
+        } else {
+          throw new IllegalStateException("Failed to start transport")
+        }
       }
     }
 
-    override def stopTransport(restart: Boolean): Future[Boolean] = {
+    override def stopTransport(): Future[Boolean] = {
       Future {
-        interop.StopTransport(restart)
-        true
+        if (interop.StopTransport()) {
+          true
+        } else {
+          throw new IllegalStateException("Failed to stop transport")
+        }
       }
     }
 
@@ -82,26 +93,8 @@ class ApplicationService(config: Config, interop: SourceService)(implicit ec: Ex
     }
   }
 
-  def audioFormat: Option[AudioFormatContainer] = {
-    val interopFormat = interop.getTargetFormat
-    val targetFormat = AudioFormatContainer(
-      interopFormat.getEncoding,
-      interopFormat.getSampleRate,
-      interopFormat.getSampleSizeInBits,
-      interopFormat.getChannels,
-      interopFormat.getFrameSize,
-      interopFormat.getFrameRate,
-      interopFormat.getBigEndian
-    )
-    val wasapiFormat = Defaults.WasapiAudioFormat
-
-    //TODO - remove debugging
-    println(interopFormat, targetFormat, wasapiFormat)
-    Some(targetFormat)
-  }
-
   def shutdown(): Unit = {
-    interop.StopAudio(false)
-    interop.StopTransport(false)
+    interop.StopAudio()
+    interop.StopTransport()
   }
 }

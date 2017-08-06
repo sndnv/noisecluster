@@ -92,12 +92,14 @@ define(["utils"],
 
                     var targets = result.state.targets;
                     for (var target in targets) {
+                        var targetData = targets[target] || {};
+
                         nodeContainer.append(
                             Home.buildButton(
                                 target,
-                                targets[target].state,
+                                targetData.state || {},
                                 target,
-                                utils.getClassFromState(targets[target].state))
+                                utils.getClassFromState(targetData.state || {}))
                         );
                     }
                 })

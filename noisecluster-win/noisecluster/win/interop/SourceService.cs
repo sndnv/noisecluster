@@ -17,8 +17,8 @@
 using System;
 using System.Threading;
 using Adaptive.Aeron;
+using log4net;
 using log4net.Config;
-using noisecluster.win.audio;
 using noisecluster.win.audio.capture;
 using noisecluster.win.transport.aeron;
 
@@ -26,138 +26,142 @@ namespace noisecluster.win.interop
 {
     public class SourceService : IDisposable
     {
+        private readonly int _stream;
+        private readonly string _address;
+        private readonly int _port;
+        private readonly int _bufferSize;
+        private readonly string _interface;
+        private readonly ILog _log = LogManager.GetLogger(typeof(SourceService));
         private readonly Aeron _aeron;
-        private readonly WasapiRecorder _audio;
-        private readonly Source _transport;
+        private WasapiRecorder _audio;
+        private Source _transport;
         private int _isTransportRunning; //0 = false; 1 = true
+        private readonly WasapiRecorder.DataHandler _dataHandler;
 
-        public SourceService(Aeron.Context systemContext, int stream, string address, int port, int bufferSize,
-            string @interface = null)
+        public SourceService(
+            Aeron.Context systemContext,
+            int stream,
+            string address,
+            int port,
+            int bufferSize,
+            string @interface = null,
+            bool withDebugingHandler = false
+        )
         {
             BasicConfigurator.Configure();
             _aeron = Aeron.Connect(systemContext);
 
-            _transport = string.IsNullOrEmpty(@interface)
-                ? new Source(_aeron, stream, address, port, bufferSize)
-                : new Source(_aeron, stream, address, port, @interface, bufferSize);
-
+            _stream = stream;
+            _address = address;
+            _port = port;
+            _bufferSize = bufferSize;
+            _interface = @interface;
             _isTransportRunning = 0;
 
-            _audio = new WasapiRecorder(
-                (data, length) =>
+            if (withDebugingHandler)
+            {
+                _dataHandler = (data, length) =>
+                {
+                    _log.DebugFormat(
+                        "Captured [{0}] bytes of audio data; transport is [{1}], [{2}] and [{3}]; ",
+                        length,
+                        _isTransportRunning == 1 ? "running" : "not running",
+                        _transport.IsConnected ? "connected" : "not connected",
+                        _transport.IsClosed ? "closed" : "not closed"
+                    );
+
+                    if (_isTransportRunning == 1 && _transport.IsConnected)
+                    {
+                        var result = _transport.Send(data, 0, length);
+                        _log.DebugFormat("Sent [{0}] bytes of audio data; result was [{1}]", length, result);
+                    }
+                };
+            }
+            else
+            {
+                _dataHandler = (data, length) =>
                 {
                     if (_isTransportRunning == 1 && _transport.IsConnected)
                     {
                         _transport.Send(data, 0, length);
                     }
-                }
-            );
+                };
+            }
         }
 
-        public SourceService(int stream, string address, int port, int bufferSize, string @interface = null)
-            : this(Defaults.GetNewSystemContext(), stream, address, port, bufferSize, @interface)
+        public SourceService(int stream, string address, int port, int bufferSize, string @interface = null,
+            bool withDebugingHandler = false)
+            : this(Defaults.GetNewSystemContext(), stream, address, port, bufferSize, @interface, withDebugingHandler)
         {
         }
 
-        public SourceService(int stream, string address, int port, string @interface = null)
-            : this(stream, address, port, Defaults.BufferSize, @interface)
+        public SourceService(int stream, string address, int port, string @interface = null,
+            bool withDebugingHandler = false)
+            : this(stream, address, port, Defaults.BufferSize, @interface, withDebugingHandler)
         {
         }
 
         public bool IsAudioActive
         {
-            get { return _audio.IsActive; }
+            get { return _audio != null && _audio.IsActive; }
         }
 
         public bool IsTransportActive
         {
-            get { return _isTransportRunning == 1; }
+            get { return _transport != null && _isTransportRunning == 1; }
         }
 
         public bool IsTransportConnected
         {
-            get { return _transport.IsConnected; }
+            get { return _transport != null && _transport.IsConnected; }
         }
 
         public bool IsTransportClosed
         {
-            get { return _transport.IsClosed; }
+            get { return _transport != null && _transport.IsClosed; }
         }
 
-        public void StartAudio()
+        public bool StartAudio()
         {
+            if (_audio != null || _transport == null) return false;
+
+            _audio = new WasapiRecorder(_dataHandler);
             _audio.Start();
+            return true;
         }
 
-        public void StopAudio(bool restart)
+        public bool StopAudio()
         {
-            if (_audio.IsActive)
-            {
-                _audio.Stop();
-            }
+            if (_audio == null) return false;
 
-            if (restart)
-            {
-                _audio.Start();
-            }
+            _audio.Dispose();
+            _audio = null;
+            return true;
         }
 
-        public void StartTransport()
+        public bool StartTransport()
         {
-            Interlocked.Exchange(ref _isTransportRunning, 1);
+            if (Interlocked.CompareExchange(ref _isTransportRunning, 1, 0) != 0) return false;
+
+            _transport = string.IsNullOrEmpty(_interface)
+                ? new Source(_aeron, _stream, _address, _port, _bufferSize)
+                : new Source(_aeron, _stream, _address, _port, _interface, _bufferSize);
+            return true;
         }
 
-        public void StopTransport(bool restart)
+        public bool StopTransport()
         {
-            Interlocked.Exchange(ref _isTransportRunning, 0);
-            StopAudio(restart);
+            if (Interlocked.CompareExchange(ref _isTransportRunning, 0, 1) != 1) return false;
 
-            if (restart)
-            {
-                Interlocked.Exchange(ref _isTransportRunning, 1);
-            }
-        }
-
-        public AudioFormatContainer SourceFormat
-        {
-            get
-            {
-                var format = _audio.SourceFormat;
-                return new AudioFormatContainer(
-                    format.WaveFormatTag.ToString(),
-                    format.SampleRate,
-                    format.BitsPerSample,
-                    format.Channels,
-                    ((format.BitsPerSample + 7) / 8) * format.Channels,
-                    format.SampleRate,
-                    false
-                );
-            }
-        }
-
-        public AudioFormatContainer TargetFormat
-        {
-            get
-            {
-                var format = _audio.TargetFormat;
-                return new AudioFormatContainer(
-                    format.WaveFormatTag.ToString(),
-                    format.SampleRate,
-                    format.BitsPerSample,
-                    format.Channels,
-                    ((format.BitsPerSample + 7) / 8) * format.Channels,
-                    format.SampleRate,
-                    false
-                );
-            }
+            _transport.Dispose();
+            _transport = null;
+            return true;
         }
 
         public void Dispose()
         {
-            StopAudio(false);
-            StopTransport(false);
-            _audio.Dispose();
-            _transport.Dispose();
+            StopAudio();
+            StopTransport();
             _aeron.Dispose();
         }
     }

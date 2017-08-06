@@ -34,7 +34,6 @@ class SourceMessenger(
   private var targetsByAddress = Map.empty[Address, String]
   private var pingsSent: Int = 0
   private var pongsReceived: Int = 0
-  private var audioStoppedBySystem: Boolean = true
 
   private val pingSchedule = context.system.scheduler.schedule(pingInterval, pingInterval) {
     targets.keys.foreach {
@@ -116,12 +115,6 @@ class SourceMessenger(
         else {
           targets -= targetName
           targetsByAddress -= targetAddress
-
-          if (targets.isEmpty) {
-            self ! Messages.StopTransport(restart = false)
-            self ! Messages.StopAudio(restart = false)
-            audioStoppedBySystem = true
-          }
         }
       }
 
@@ -136,14 +129,6 @@ class SourceMessenger(
         targets += targetName -> None
         targetsByAddress += targetAddress -> targetName
         log.info("Registered target [{}] with address [{}]", targetName, targetAddress)
-
-        if (targets.size == 1) {
-          if (audioStoppedBySystem) {
-            self ! Messages.StartAudio(None)
-            self ! Messages.StartTransport()
-            audioStoppedBySystem = false
-          }
-        }
       }
 
     case message: Messages.Pong =>

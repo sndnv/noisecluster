@@ -22,8 +22,10 @@ import akka.util.Timeout
 import com.google.inject.{AbstractModule, Provides, Singleton}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import core3.http.filters.{CompressionFilter, MaintenanceModeFilter, MetricsFilter, TraceFilter}
+import io.aeron.driver.MediaDriver
 import net.sf.jni4net.Bridge
 import noisecluster.jvm.control.cluster
+import noisecluster.jvm.transport.aeron.Contexts
 import noisecluster.win.interop
 import play.api.inject.ApplicationLifecycle
 import vili.ApplicationService
@@ -31,6 +33,7 @@ import vili.ApplicationService
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 class Module extends AbstractModule {
 
@@ -60,7 +63,16 @@ class Module extends AbstractModule {
 
   @Provides
   @Singleton
-  def provideInteropService(lifecycle: ApplicationLifecycle): interop.SourceService = {
+  def provideMediaDriver(): MediaDriver = {
+    MediaDriver.launch(Contexts.Driver.lowLatency)
+  }
+
+  @Provides
+  @Singleton
+  def provideInteropService(
+    lifecycle: ApplicationLifecycle,
+    driver: MediaDriver
+  )(implicit ec: ExecutionContext): interop.SourceService = {
     val baseConfig = ConfigFactory.load()
     val appConfig = baseConfig.getConfig("noisecluster.vili")
 
@@ -72,10 +84,25 @@ class Module extends AbstractModule {
       appConfig.getInt("transport.stream"),
       appConfig.getString("transport.address"),
       appConfig.getInt("transport.port"),
-      if (appConfig.hasPath("transport.interface")) appConfig.getString("transport.interface") else null
+      if (appConfig.hasPath("transport.interface")) appConfig.getString("transport.interface") else null,
+      true
     )
 
-    lifecycle.addStopHook { () => Future.successful(service.Dispose()) }
+    lifecycle.addStopHook { () =>
+      Future {
+        try {
+          service.Dispose()
+        } catch {
+          case NonFatal(e) => e.printStackTrace()
+        }
+
+        try {
+          driver.close()
+        } catch {
+          case NonFatal(e) => e.printStackTrace()
+        }
+      }
+    }
 
     service
   }

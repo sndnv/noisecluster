@@ -41,12 +41,12 @@ class BasicSpec extends FlatSpec with Matchers {
   private implicit val aeron = Aeron.connect(Defaults.getNewSystemContext)
 
   private val source: Source = Source(stream, channel, Defaults.BufferSize)
-  private val target: Target = Target(stream, channel, testDataHandler, Defaults.IdleStrategy, Defaults.FragmentLimit)
+  private val target: Target = Target(stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit)
 
   private val testByteArraySize = 1000
 
   private var targetFuture = Future {
-    target.start()
+    target.start(testDataHandler)
   }
 
   waitUntil(what = "target becomes inactive", waitTimeMs = 500, waitAttempts = 10) {
@@ -85,7 +85,7 @@ class BasicSpec extends FlatSpec with Matchers {
   it should "successfully restart and accept data" in {
     target.isActive should be(false)
     targetFuture = Future {
-      target.start()
+      target.start(testDataHandler)
     }
 
     waitUntil(what = "target becomes active", waitTimeMs = 500, waitAttempts = 10) {

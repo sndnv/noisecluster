@@ -21,9 +21,6 @@ import akka.actor.ActorSystem
 import com.typesafe.config.Config
 import io.aeron.Aeron
 import io.aeron.driver.MediaDriver
-import noisecluster.jvm
-import noisecluster.jvm.audio
-import noisecluster.jvm.audio.AudioFormatContainer
 import noisecluster.jvm.audio.render.ByteStreamPlayer
 import noisecluster.jvm.control.LocalHandlers
 import noisecluster.jvm.transport.aeron.{Contexts, Defaults, Target}
@@ -40,6 +37,13 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
   private val interfaceOpt: Option[String] = if (config.hasPath("transport.interface")) Some(config.getString("transport.interface")) else None
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
   private val hostStopTimeout: Int = config.getInt("host.stopTimeout") //in seconds
+  private val audioFormat: AudioFormat = new AudioFormat(
+    config.getInt("audio.format.sampleRate").toFloat,
+    config.getInt("audio.format.sampleSizeInBits"),
+    config.getInt("audio.format.channels"),
+    config.getBoolean("audio.format.signed"),
+    config.getBoolean("audio.format.bigEndian")
+  )
 
   private val driver = MediaDriver.launch(Contexts.Driver.lowLatency)
   private implicit val aeron = Aeron.connect(Contexts.System.default)
@@ -48,33 +52,29 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
   private var transportOpt: Option[Target] = None
 
   val localHandlers = new LocalHandlers {
-    override def startAudio(formatContainer: Option[AudioFormatContainer]): Future[Boolean] = {
+    override def startAudio(): Future[Boolean] = {
       Future {
         audioOpt match {
-          case Some(audio) =>
-            audio.start()
+          case Some(_) =>
+            throw new IllegalStateException("Audio is already available")
 
           case None =>
-            formatContainer match {
-              case Some(format) =>
-                val audio = ByteStreamPlayer(jvm.audio.Defaults.WasapiAudioFormat) //TODO - update to supplied value
-                audioOpt = Some(audio)
-                audio.start()
-
-              case None =>
-                throw new IllegalArgumentException("Cannot start audio; no format specified")
-            }
+            val audio = ByteStreamPlayer(audioFormat)
+            audioOpt = Some(audio)
+            audio.start()
         }
 
         true
       }
     }
 
-    override def stopAudio(restart: Boolean): Future[Boolean] = {
+    override def stopAudio(): Future[Boolean] = {
       Future {
         audioOpt match {
           case Some(audio) =>
             audio.stop()
+            audio.close()
+            audioOpt = None
 
           case None =>
             throw new IllegalStateException("Cannot stop audio; no audio available")
@@ -90,19 +90,19 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
           case Some(audio) =>
             transportOpt match {
               case Some(transport) =>
-                transport.start()
+                transport.start(audio.write)
 
               case None =>
                 val target = interfaceOpt match {
                   case Some(interface) =>
-                    Target(stream, address, port, interface, audio.write, Defaults.IdleStrategy, Defaults.FragmentLimit)
+                    Target(stream, address, port, interface, Defaults.IdleStrategy, Defaults.FragmentLimit)
 
                   case None =>
-                    Target(stream, address, port, audio.write)
+                    Target(stream, address, port)
                 }
 
                 transportOpt = Some(target)
-                target.start()
+                target.start(audio.write)
             }
 
           case None =>
@@ -113,11 +113,13 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
       }
     }
 
-    override def stopTransport(restart: Boolean): Future[Boolean] = {
+    override def stopTransport(): Future[Boolean] = {
       Future {
         transportOpt match {
           case Some(transport) =>
             transport.stop()
+            transport.close()
+            transportOpt = None
 
           case None =>
             throw new IllegalStateException("Cannot stop transport; no transport available")

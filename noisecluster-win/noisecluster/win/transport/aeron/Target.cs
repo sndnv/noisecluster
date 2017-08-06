@@ -31,7 +31,6 @@ namespace noisecluster.win.transport.aeron
         private readonly Subscription _subscription;
         private readonly IIdleStrategy _idleStrategy;
         private readonly int _fragmentLimit;
-        private readonly FragmentAssembler _fragmentAssembler;
 
         public bool IsActive
         {
@@ -44,7 +43,6 @@ namespace noisecluster.win.transport.aeron
             Aeron aeron,
             int stream,
             string channel,
-            DataHandler dataHandler,
             IIdleStrategy idleStrategy,
             int fragmentLimit
         )
@@ -52,29 +50,29 @@ namespace noisecluster.win.transport.aeron
             _stream = stream;
             _channel = channel;
             _subscription = aeron.AddSubscription(_channel, _stream);
-            _fragmentAssembler = new FragmentAssembler(
-                (buffer, offset, length, _) =>
-                {
-                    var data = new byte[length];
-                    buffer.GetBytes(offset, data);
-                    dataHandler(data, length);
-                }
-            );
             _idleStrategy = idleStrategy;
             _fragmentLimit = fragmentLimit;
         }
 
         //docs - warn about blocking
-        public void Start()
+        public void Start(DataHandler dataHandler)
         {
             if (Interlocked.CompareExchange(ref _isRunning, 1, 0) == 0)
             {
                 _log.InfoFormat("Starting transport for channel [{0}] and stream [{1}]", _channel, _stream);
+                var fragmentAssembler = new FragmentAssembler(
+                    (buffer, offset, length, _) =>
+                    {
+                        var data = new byte[length];
+                        buffer.GetBytes(offset, data);
+                        dataHandler(data, length);
+                    }
+                );
 
                 //will block until stopped
                 while (_isRunning == 1)
                 {
-                    var fragmentsRead = _subscription.Poll(_fragmentAssembler.OnFragment, _fragmentLimit);
+                    var fragmentsRead = _subscription.Poll(fragmentAssembler.OnFragment, _fragmentLimit);
                     _idleStrategy.Idle(fragmentsRead);
                 }
 

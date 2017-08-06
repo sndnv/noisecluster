@@ -100,13 +100,11 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
           control.getClusterState.map {
             state =>
               val message: ControlMessage = (params.service.toLowerCase, params.action.toLowerCase) match {
-                case ("audio", "start") => StartAudio(appService.audioFormat)
-                case ("audio", "stop") => StopAudio(restart = false)
-                case ("audio", "restart") => StopAudio(restart = true)
+                case ("audio", "start") => StartAudio()
+                case ("audio", "stop") => StopAudio()
 
                 case ("transport", "start") => StartTransport()
-                case ("transport", "stop") => StopTransport(restart = false)
-                case ("transport", "restart") => StopTransport(restart = true)
+                case ("transport", "stop") => StopTransport()
 
                 case ("application", "stop") => StopApplication(restart = false)
                 case ("application", "restart") => StopApplication(restart = true)
@@ -128,7 +126,9 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
 
               NoContent
           }.recover {
-            case NonFatal(e) => InternalServerError(s"Exception encountered: [$e]")
+            case NonFatal(e) =>
+              e.printStackTrace()
+              InternalServerError(s"Exception encountered: [$e]")
           }
         }
       )

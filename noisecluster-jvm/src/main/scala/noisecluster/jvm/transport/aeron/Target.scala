@@ -29,7 +29,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class Target(
   private val stream: Int,
   private val channel: String,
-  private val dataHandler: (Array[Byte], Int) => Unit,
   private val idleStrategy: IdleStrategy,
   private val fragmentLimit: Int
 )(implicit loggingActorSystem: ActorSystem, aeron: Aeron) {
@@ -37,23 +36,20 @@ class Target(
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val subscription = aeron.addSubscription(channel, stream)
 
-  private val fragmentHandler = new FragmentHandler {
-    override def onFragment(buffer: DirectBuffer, offset: Int, length: Int, header: Header): Unit = {
-      val data = new Array[Byte](length)
-      buffer.getBytes(offset, data)
-      dataHandler(data, length)
-    }
-  }
-
-  private val fragmentAssembler = new FragmentAssembler(fragmentHandler)
-
   def isActive: Boolean = isRunning.get
 
-  def start()(implicit ec: ExecutionContext): Unit = {
+  def start(dataHandler: (Array[Byte], Int) => Unit)(implicit ec: ExecutionContext): Unit = {
     if (isRunning.compareAndSet(false, true)) {
       log.info("Starting transport for channel [{}] and stream [{}]", channel, stream)
-
       Future {
+        val fragmentAssembler = new FragmentAssembler(
+          (buffer: DirectBuffer, offset: Int, length: Int, _: Header) => {
+            val data = new Array[Byte](length)
+            buffer.getBytes(offset, data)
+            dataHandler(data, length)
+          }
+        )
+
         //will block until stopped
         while (isRunning.get) {
           val fragmentsRead = subscription.poll(fragmentAssembler, fragmentLimit)
@@ -97,14 +93,12 @@ object Target {
     stream: Int,
     address: String,
     port: Int,
-    dataHandler: (Array[Byte], Int) => Unit,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
   )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
     new Target(
       stream,
       s"aeron:udp?endpoint=$address:$port",
-      dataHandler,
       idleStrategy,
       fragmentLimit
     )
@@ -114,14 +108,12 @@ object Target {
     address: String,
     port: Int,
     interface: String,
-    dataHandler: (Array[Byte], Int) => Unit,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
   )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
     new Target(
       stream,
       s"aeron:udp?endpoint=$address:$port|interface=$interface",
-      dataHandler,
       idleStrategy,
       fragmentLimit
     )
@@ -129,14 +121,12 @@ object Target {
   def apply(
     stream: Int,
     channel: String,
-    dataHandler: (Array[Byte], Int) => Unit,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
   )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
     new Target(
       stream,
       channel,
-      dataHandler,
       idleStrategy,
       fragmentLimit
     )
@@ -144,14 +134,12 @@ object Target {
   def apply(
     stream: Int,
     address: String,
-    port: Int,
-    dataHandler: (Array[Byte], Int) => Unit
+    port: Int
   )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
     Target(
       stream,
       address,
       port,
-      dataHandler,
       Defaults.IdleStrategy,
       Defaults.FragmentLimit
     )

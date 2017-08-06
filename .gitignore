@@ -10,6 +10,7 @@ RUNNING_PID
 logback.xml
 ve/src/main/resources/application.conf
 vili/conf/application.conf
+lib/
 
 # cs / .NET
 [Dd]ebug/

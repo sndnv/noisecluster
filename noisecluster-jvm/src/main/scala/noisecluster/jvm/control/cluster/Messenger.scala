@@ -59,11 +59,12 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
   protected def getLocalState: NodeState = localState
 
   private var receivers: Actor.Receive = {
-    case Messages.StartAudio(formatContainer) =>
+    case Messages.StartAudio() =>
+      val previousState = localState.audio
       updateLocalState(ServiceLevel.Audio, ServiceState.Starting)
 
       localHandlers
-        .startAudio(formatContainer)
+        .startAudio()
         .map {
           result =>
             self ! Messenger.UpdateLocalState(ServiceLevel.Audio, ServiceState.Active)
@@ -71,15 +72,17 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         }
         .recover {
           case NonFatal(e) =>
-            log.error("Exception encountered while starting audio with format [{}]: [{}]", formatContainer, e)
+            log.error("Exception encountered while starting audio: [{}]", e)
+            self ! Messenger.UpdateLocalState(ServiceLevel.Audio, previousState)
             throw e
         }
 
-    case Messages.StopAudio(restart) =>
-      updateLocalState(ServiceLevel.Audio, if (restart) ServiceState.Restarting else ServiceState.Stopping)
+    case Messages.StopAudio() =>
+      val previousState = localState.audio
+      updateLocalState(ServiceLevel.Audio, ServiceState.Stopping)
 
       localHandlers
-        .stopAudio(restart)
+        .stopAudio()
         .map {
           result =>
             self ! Messenger.UpdateLocalState(ServiceLevel.Audio, ServiceState.Stopped)
@@ -87,11 +90,13 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         }
         .recover {
           case NonFatal(e) =>
-            log.error("Exception encountered while [{}] audio: [{}]", if (restart) "restarting" else "stopping", e)
+            log.error("Exception encountered while stopping audio: [{}]", e)
+            self ! Messenger.UpdateLocalState(ServiceLevel.Audio, previousState)
             throw e
         }
 
     case Messages.StartTransport() =>
+      val previousState = localState.transport
       updateLocalState(ServiceLevel.Transport, ServiceState.Starting)
 
       localHandlers
@@ -104,14 +109,16 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while starting transport: [{}]", e)
+            self ! Messenger.UpdateLocalState(ServiceLevel.Transport, previousState)
             throw e
         }
 
-    case Messages.StopTransport(restart) =>
-      updateLocalState(ServiceLevel.Transport, if (restart) ServiceState.Restarting else ServiceState.Stopping)
+    case Messages.StopTransport() =>
+      val previousState = localState.transport
+      updateLocalState(ServiceLevel.Transport, ServiceState.Stopping)
 
       localHandlers
-        .stopTransport(restart)
+        .stopTransport()
         .map {
           result =>
             self ! Messenger.UpdateLocalState(ServiceLevel.Transport, ServiceState.Stopped)
@@ -119,11 +126,13 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         }
         .recover {
           case NonFatal(e) =>
-            log.error("Exception encountered while [{}] transport: [{}]", if (restart) "restarting" else "stopping", e)
+            log.error("Exception encountered while stopping transport: [{}]", e)
+            self ! Messenger.UpdateLocalState(ServiceLevel.Transport, previousState)
             throw e
         }
 
     case Messages.StopApplication(restart) =>
+      val previousState = localState.application
       updateLocalState(ServiceLevel.Application, if (restart) ServiceState.Restarting else ServiceState.Stopping)
 
       localHandlers
@@ -131,10 +140,12 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while [{}] application: [{}]", if (restart) "restarting" else "stopping", e)
+            self ! Messenger.UpdateLocalState(ServiceLevel.Application, previousState)
             throw e
         }
 
     case Messages.StopHost(restart) =>
+      val previousState = localState.host
       updateLocalState(ServiceLevel.Host, if (restart) ServiceState.Restarting else ServiceState.Stopping)
 
       localHandlers
@@ -142,6 +153,7 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while [{}] host: [{}]", if (restart) "restarting" else "stopping", e)
+            self ! Messenger.UpdateLocalState(ServiceLevel.Host, previousState)
             throw e
         }
 

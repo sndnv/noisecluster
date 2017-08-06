@@ -42,8 +42,9 @@ namespace noisecluster.win.audio.capture
             _soundInSource = new SoundInSource(_capture) {FillWithZeros = false};
 
             _convertedSource = _soundInSource
+                .ChangeSampleRate(48000) //TODO - from config
                 .ToSampleSource()
-                .ToWaveSource(16)
+                .ToWaveSource(16) //TODO - from config
                 .ToStereo();
 
             WithDataHandler(handler);

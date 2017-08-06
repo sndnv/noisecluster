@@ -16,7 +16,6 @@
 package noisecluster.jvm.control
 
 import akka.actor.Address
-import akka.cluster.MemberStatus
 
 package object cluster {
   val SourceActorNamePrefix: String = "source_"

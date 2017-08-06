@@ -29,7 +29,7 @@ namespace noisecluster.win.test.transport.aeron
         private long _testDataSent;
         private long _testDataReceived;
 
-        private Target.DataHandler _testDataHandler;
+        private readonly Target.DataHandler _testDataHandler;
 
         private readonly Aeron _aeron;
 
@@ -49,19 +49,18 @@ namespace noisecluster.win.test.transport.aeron
 
             _testDataHandler = (data, length) => { _testDataReceived += length; };
 
-            var channel = "aeron:ipc";
-            var stream = 42;
+            const string channel = "aeron:ipc";
+            const int stream = 42;
             _aeron = Aeron.Connect(Defaults.GetNewSystemContext());
 
             _source = new Source(_aeron, stream, channel, Defaults.BufferSize);
-            _target = new Target(_aeron, stream, channel, _testDataHandler, Defaults.IdleStrategy,
-                Defaults.FragmentLimit);
+            _target = new Target(_aeron, stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit);
 
             _testByteArraySize = 1000;
 
             _rnd = new Random();
 
-            _targetTask = new Task(() => { _target.Start(); });
+            _targetTask = new Task(() => { _target.Start(_testDataHandler); });
             _targetTask.Start();
         }
 
@@ -97,7 +96,7 @@ namespace noisecluster.win.test.transport.aeron
         {
             Assert.IsFalse(_target.IsActive);
 
-            _targetTask = new Task(() => { _target.Start(); });
+            _targetTask = new Task(() => { _target.Start(_testDataHandler); });
             _targetTask.Start();
 
             Utils.WaitUntil("target becomes active", 500, 10, () => _target.IsActive);
