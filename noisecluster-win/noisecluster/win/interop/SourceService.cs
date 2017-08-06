@@ -72,8 +72,8 @@ namespace noisecluster.win.interop
 
                     if (_isTransportRunning == 1 && _transport.IsConnected)
                     {
-                        var result = _transport.Send(data, 0, length);
-                        _log.DebugFormat("Sent [{0}] bytes of audio data; result was [{1}]", length, result);
+                        _transport.Send(data, 0, length);
+                        _log.DebugFormat("Sent [{0}] bytes of audio data", length);
                     }
                 };
             }

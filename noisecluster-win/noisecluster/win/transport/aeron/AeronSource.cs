@@ -22,7 +22,7 @@ using log4net;
 
 namespace noisecluster.win.transport.aeron
 {
-    public class AeronSource : IDisposable
+    public class AeronSource : ISource
     {
         private readonly ILog _log = LogManager.GetLogger(typeof(AeronSource));
         private readonly int _stream;
@@ -148,16 +148,16 @@ namespace noisecluster.win.transport.aeron
             return Offer(length);
         }
 
-        public long Send(byte[] source, int offset, int length)
+        public void Send(byte[] source, int offset, int length)
         {
             _buffer.PutBytes(0, source, offset, length);
-            return Offer(length);
+            Offer(length);
         }
 
-        public long Send(byte[] source)
+        public void Send(byte[] source)
         {
             _buffer.PutBytes(0, source);
-            return Offer(source.Length);
+            Offer(source.Length);
         }
 
         public void Close()

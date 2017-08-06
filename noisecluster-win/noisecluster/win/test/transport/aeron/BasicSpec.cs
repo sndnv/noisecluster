@@ -18,6 +18,7 @@ using System;
 using System.Threading.Tasks;
 using Adaptive.Aeron;
 using log4net.Config;
+using noisecluster.win.transport;
 using noisecluster.win.transport.aeron;
 using NUnit.Framework;
 
@@ -29,7 +30,7 @@ namespace noisecluster.win.test.transport.aeron
         private long _testDataSent;
         private long _testDataReceived;
 
-        private readonly AeronTarget.DataHandler _testDataHandler;
+        private readonly DataHandler _testDataHandler;
 
         private readonly Aeron _aeron;
 

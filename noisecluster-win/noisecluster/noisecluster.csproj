@@ -63,6 +63,8 @@
     <Compile Include="win\transport\aeron\Defaults.cs" />
     <Compile Include="win\transport\aeron\AeronSource.cs" />
     <Compile Include="win\transport\aeron\AeronTarget.cs" />
+    <Compile Include="win\transport\ISource.cs" />
+    <Compile Include="win\transport\ITarget.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
