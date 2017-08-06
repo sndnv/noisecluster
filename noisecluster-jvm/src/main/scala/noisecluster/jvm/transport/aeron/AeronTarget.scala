@@ -21,17 +21,18 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import io.aeron._
 import io.aeron.logbuffer._
+import noisecluster.jvm.transport.Target
 import org.agrona.DirectBuffer
 import org.agrona.concurrent._
 
-import scala.concurrent.{ExecutionContext, blocking}
+import scala.concurrent.blocking
 
 class AeronTarget(
   private val stream: Int,
   private val channel: String,
   private val idleStrategy: IdleStrategy,
   private val fragmentLimit: Int
-)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) {
+)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) extends Target {
   private val isRunning = new AtomicBoolean(false)
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val subscription = aeron.addSubscription(channel, stream)
@@ -39,7 +40,7 @@ class AeronTarget(
   def isActive: Boolean = isRunning.get
 
   //docs - warn about blocking
-  def start(dataHandler: (Array[Byte], Int) => Unit)(implicit ec: ExecutionContext): Unit = {
+  override def start(dataHandler: (Array[Byte], Int) => Unit): Unit = {
     if (isRunning.compareAndSet(false, true)) {
       log.info("Starting transport for channel [{}] and stream [{}]", channel, stream)
 
@@ -67,7 +68,7 @@ class AeronTarget(
     }
   }
 
-  def stop(): Unit = {
+  override def stop(): Unit = {
     if (isRunning.compareAndSet(true, false)) {
       log.info("Stopping transport for channel [{}] and stream [{}]", channel, stream)
     } else {
@@ -77,7 +78,7 @@ class AeronTarget(
     }
   }
 
-  def close(): Unit = {
+  override def close(): Unit = {
     if (!isRunning.get) {
       log.info("Closing transport for channel [{}] and stream [{}]", channel, stream)
       subscription.close()

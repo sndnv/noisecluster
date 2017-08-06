@@ -20,6 +20,7 @@ import java.nio.ByteBuffer
 import akka.actor.ActorSystem
 import akka.event.Logging
 import io.aeron.{Aeron, Publication}
+import noisecluster.jvm.transport.Source
 import org.agrona.concurrent.UnsafeBuffer
 import org.agrona.{BitUtil, BufferUtil, DirectBuffer}
 
@@ -27,7 +28,7 @@ class AeronSource(
   private val stream: Int,
   private val channel: String,
   private val bufferSize: Int //in bytes
-)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) {
+)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) extends Source {
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val publication = aeron.addPublication(channel, stream)
   private val buffer = new UnsafeBuffer(BufferUtil.allocateDirectAligned(bufferSize, BitUtil.CACHE_LINE_LENGTH))
@@ -78,17 +79,17 @@ class AeronSource(
     offer(length)
   }
 
-  def send(source: Array[Byte]): Long = {
+  override def send(source: Array[Byte]): Unit = {
     buffer.putBytes(0, source)
     offer(source.length)
   }
 
-  def send(source: Array[Byte], offset: Int, length: Int): Long = {
+  override def send(source: Array[Byte], offset: Int, length: Int): Unit = {
     buffer.putBytes(0, source, offset, length)
     offer(length)
   }
 
-  def close(): Unit = {
+  override def close(): Unit = {
     if (!publication.isClosed) {
       log.info("Closing transport for channel [{}] and stream [{}]", channel, stream)
       publication.close()
