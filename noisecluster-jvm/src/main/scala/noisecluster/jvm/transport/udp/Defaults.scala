@@ -1,4 +1,4 @@
-﻿/**
+/**
   * Copyright 2017 https://github.com/sndnv
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,8 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
+package noisecluster.jvm.transport.udp
 
-using System;
-
-namespace noisecluster.win.transport
-{
-    public delegate void DataHandler(byte[] data, int length);
-
-    public interface ITarget : IDisposable
-    {
-        void Start(DataHandler dataHandler);
-        void Stop();
-        void Close();
-        bool IsActive();
-    }
+object Defaults {
+  val BufferSize: Int = 4096
 }

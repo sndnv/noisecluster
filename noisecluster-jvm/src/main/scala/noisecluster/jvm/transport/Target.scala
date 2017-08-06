@@ -19,4 +19,5 @@ trait Target {
   def start(dataHandler: (Array[Byte], Int) => Unit): Unit
   def stop(): Unit
   def close(): Unit
+  def isActive: Boolean
 }

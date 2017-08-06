@@ -16,33 +16,30 @@
 
 using System;
 using System.Threading.Tasks;
-using Adaptive.Aeron;
 using log4net.Config;
 using noisecluster.win.transport;
-using noisecluster.win.transport.aeron;
+using noisecluster.win.transport.udp;
 using NUnit.Framework;
 
-namespace noisecluster.win.test.transport.aeron
+namespace noisecluster.win.test.transport.udp
 {
     [TestFixture]
-    public class BasicSpec
+    public class BasicUdpSpec
     {
         private long _testDataSent;
         private long _testDataReceived;
 
         private readonly DataHandler _testDataHandler;
 
-        private readonly Aeron _aeron;
-
-        private readonly AeronSource _source;
-        private readonly AeronTarget _target;
+        private readonly UdpSource _source;
+        private readonly UdpTarget _target;
 
         private readonly int _testByteArraySize;
 
         private readonly Random _rnd;
         private Task _targetTask;
 
-        public BasicSpec()
+        public BasicUdpSpec()
         {
             BasicConfigurator.Configure();
             _testDataSent = 0;
@@ -50,24 +47,25 @@ namespace noisecluster.win.test.transport.aeron
 
             _testDataHandler = (data, length) => { _testDataReceived += length; };
 
-            const string channel = "aeron:ipc";
-            const int stream = 42;
-            _aeron = Aeron.Connect(Defaults.GetNewSystemContext());
+            const string address = "225.100.50.25";
+            const int port = 49042;
 
-            _source = new AeronSource(_aeron, stream, channel, Defaults.BufferSize);
-            _target = new AeronTarget(_aeron, stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit);
+            _source = new UdpSource(address, port);
+            _target = new UdpTarget(address, port);
 
             _testByteArraySize = 1000;
 
             _rnd = new Random();
-
-            _targetTask = new Task(() => { _target.Start(_testDataHandler); });
-            _targetTask.Start();
         }
 
         [Test]
         public void T01_SourceAndTarget_should_ExchangeData()
         {
+            _targetTask = new Task(() => { _target.Start(_testDataHandler); });
+            _targetTask.Start();
+            
+            Utils.WaitUntil("target becomes active", 500, 10, () => _target.IsActive());
+
             var bytes = new byte[_testByteArraySize];
             _rnd.NextBytes(bytes);
             _source.Send(bytes);
@@ -82,12 +80,12 @@ namespace noisecluster.win.test.transport.aeron
         [Test]
         public void T02_Target_should_StopAcceptingData()
         {
-            Assert.IsTrue(_target.IsActive);
+            Assert.IsTrue(_target.IsActive());
             _target.Stop();
 
-            Utils.WaitUntil("target becomes inactive", 500, 10, () => !_target.IsActive);
+            Utils.WaitUntil("target becomes inactive", 500, 10, () => !_target.IsActive());
 
-            Assert.IsFalse(_target.IsActive);
+            Assert.IsFalse(_target.IsActive());
 
             Assert.Throws<InvalidOperationException>(() => { _target.Stop(); });
         }
@@ -95,14 +93,14 @@ namespace noisecluster.win.test.transport.aeron
         [Test]
         public void T03_Target_should_RestartAcceptingData()
         {
-            Assert.IsFalse(_target.IsActive);
+            Assert.IsFalse(_target.IsActive());
 
             _targetTask = new Task(() => { _target.Start(_testDataHandler); });
             _targetTask.Start();
 
-            Utils.WaitUntil("target becomes active", 500, 10, () => _target.IsActive);
+            Utils.WaitUntil("target becomes active", 500, 10, () => _target.IsActive());
 
-            Assert.IsTrue(_target.IsActive);
+            Assert.IsTrue(_target.IsActive());
 
             var bytes = new byte[_testByteArraySize];
             _rnd.NextBytes(bytes);
@@ -124,21 +122,13 @@ namespace noisecluster.win.test.transport.aeron
         [Test]
         public void T05_Target_should_StopAndCloseItsConnection()
         {
-            Assert.IsTrue(_target.IsActive);
+            Assert.IsTrue(_target.IsActive());
             _target.Stop();
 
-            Utils.WaitUntil("target becomes inactive", 500, 10, () => !_target.IsActive);
+            Utils.WaitUntil("target becomes inactive", 500, 10, () => !_target.IsActive());
 
             _target.Close();
-            Assert.IsFalse(_target.IsActive);
-        }
-
-        [Test]
-        public void T06_System_should_DisposeOfTransportObjects()
-        {
-            _source.Dispose();
-            _target.Dispose();
-            _aeron.Dispose();
+            Assert.IsFalse(_target.IsActive());
         }
     }
 }

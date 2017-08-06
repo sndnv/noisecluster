@@ -32,9 +32,9 @@ namespace noisecluster.win.transport.aeron
         private readonly IIdleStrategy _idleStrategy;
         private readonly int _fragmentLimit;
 
-        public bool IsActive
+        public bool IsActive()
         {
-            get { return _isRunning == 1; }
+            return _isRunning == 1;
         }
 
         public AeronTarget(
@@ -128,6 +128,7 @@ namespace noisecluster.win.transport.aeron
 
         public void Dispose()
         {
+            Interlocked.Exchange(ref _isRunning, 0);
             _subscription.Dispose();
         }
     }

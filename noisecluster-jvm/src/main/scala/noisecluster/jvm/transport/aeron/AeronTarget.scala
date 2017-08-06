@@ -37,7 +37,7 @@ class AeronTarget(
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val subscription = aeron.addSubscription(channel, stream)
 
-  def isActive: Boolean = isRunning.get
+  override def isActive: Boolean = isRunning.get
 
   //docs - warn about blocking
   override def start(dataHandler: (Array[Byte], Int) => Unit): Unit = {

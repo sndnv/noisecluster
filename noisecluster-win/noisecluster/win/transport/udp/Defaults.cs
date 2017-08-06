@@ -14,17 +14,12 @@
   * limitations under the License.
   */
 
-using System;
-
-namespace noisecluster.win.transport
+namespace noisecluster.win.transport.udp
 {
-    public delegate void DataHandler(byte[] data, int length);
-
-    public interface ITarget : IDisposable
+    public static class Defaults
     {
-        void Start(DataHandler dataHandler);
-        void Stop();
-        void Close();
-        bool IsActive();
+        public static int BufferSizeSmall = 4 * 1024;
+        public static int BufferSize = 16 * 1024;
+        public static int BufferSizeLarge = 64 * 1024;
     }
 }
