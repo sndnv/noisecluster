@@ -19,13 +19,13 @@ import akka.actor.ActorSystem
 import io.aeron.Aeron
 import io.aeron.driver.MediaDriver
 import noisecluster.jvm.test.utils._
-import noisecluster.jvm.transport.aeron.{Defaults, Source, Target}
+import noisecluster.jvm.transport.aeron.{Defaults, AeronSource, AeronTarget}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
-class BasicSpec extends FlatSpec with Matchers {
+class BasicAeronSpec extends FlatSpec with Matchers {
   private var testDataSent = 0L
   private var testDataReceived = 0L
 
@@ -40,8 +40,8 @@ class BasicSpec extends FlatSpec with Matchers {
   private val driver = MediaDriver.launch(Defaults.getNewDriverContext)
   private implicit val aeron = Aeron.connect(Defaults.getNewSystemContext)
 
-  private val source: Source = Source(stream, channel, Defaults.BufferSize)
-  private val target: Target = Target(stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit)
+  private val source: AeronSource = AeronSource(stream, channel, Defaults.BufferSize)
+  private val target: AeronTarget = AeronTarget(stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit)
 
   private val testByteArraySize = 1000
 
@@ -49,7 +49,7 @@ class BasicSpec extends FlatSpec with Matchers {
     target.start(testDataHandler)
   }
 
-  waitUntil(what = "target becomes inactive", waitTimeMs = 500, waitAttempts = 10) {
+  waitUntil(what = "target becomes active", waitTimeMs = 500, waitAttempts = 10) {
     target.isActive
   }
 

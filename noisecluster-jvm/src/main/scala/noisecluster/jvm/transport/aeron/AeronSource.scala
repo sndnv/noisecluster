@@ -23,7 +23,7 @@ import io.aeron.{Aeron, Publication}
 import org.agrona.concurrent.UnsafeBuffer
 import org.agrona.{BitUtil, BufferUtil, DirectBuffer}
 
-class Source(
+class AeronSource(
   private val stream: Int,
   private val channel: String,
   private val bufferSize: Int //in bytes
@@ -101,14 +101,14 @@ class Source(
   }
 }
 
-object Source {
+object AeronSource {
   def apply(
     stream: Int,
     address: String,
     port: Int,
     bufferSize: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Source =
-    new Source(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronSource =
+    new AeronSource(
       stream,
       s"aeron:udp?endpoint=$address:$port",
       bufferSize
@@ -120,8 +120,8 @@ object Source {
     port: Int,
     interface: String,
     bufferSize: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Source =
-    new Source(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronSource =
+    new AeronSource(
       stream,
       s"aeron:udp?endpoint=$address:$port|interface=$interface",
       bufferSize
@@ -131,8 +131,8 @@ object Source {
     stream: Int,
     channel: String,
     bufferSize: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Source =
-    new Source(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronSource =
+    new AeronSource(
       stream,
       channel,
       bufferSize

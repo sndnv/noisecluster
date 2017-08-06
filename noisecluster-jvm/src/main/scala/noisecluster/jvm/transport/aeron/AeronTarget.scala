@@ -24,9 +24,9 @@ import io.aeron.logbuffer._
 import org.agrona.DirectBuffer
 import org.agrona.concurrent._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, blocking}
 
-class Target(
+class AeronTarget(
   private val stream: Int,
   private val channel: String,
   private val idleStrategy: IdleStrategy,
@@ -38,26 +38,28 @@ class Target(
 
   def isActive: Boolean = isRunning.get
 
+  //docs - warn about blocking
   def start(dataHandler: (Array[Byte], Int) => Unit)(implicit ec: ExecutionContext): Unit = {
     if (isRunning.compareAndSet(false, true)) {
       log.info("Starting transport for channel [{}] and stream [{}]", channel, stream)
-      Future {
-        val fragmentAssembler = new FragmentAssembler(
-          (buffer: DirectBuffer, offset: Int, length: Int, _: Header) => {
-            val data = new Array[Byte](length)
-            buffer.getBytes(offset, data)
-            dataHandler(data, length)
-          }
-        )
 
-        //will block until stopped
+      val fragmentAssembler = new FragmentAssembler(
+        (buffer: DirectBuffer, offset: Int, length: Int, _: Header) => {
+          val data = new Array[Byte](length)
+          buffer.getBytes(offset, data)
+          dataHandler(data, length)
+        }
+      )
+
+      blocking {
         while (isRunning.get) {
           val fragmentsRead = subscription.poll(fragmentAssembler, fragmentLimit)
           idleStrategy.idle(fragmentsRead)
         }
-
-        log.info("Stopped transport for channel [{}] and stream [{}]", channel, stream)
       }
+
+      log.info("Stopped transport for channel [{}] and stream [{}]", channel, stream)
+
     } else {
       val message = s"Cannot start transport for channel [$channel] and stream [$stream]; transport is already active"
       log.warning(message)
@@ -88,15 +90,15 @@ class Target(
   }
 }
 
-object Target {
+object AeronTarget {
   def apply(
     stream: Int,
     address: String,
     port: Int,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
-    new Target(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronTarget =
+    new AeronTarget(
       stream,
       s"aeron:udp?endpoint=$address:$port",
       idleStrategy,
@@ -110,8 +112,8 @@ object Target {
     interface: String,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
-    new Target(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronTarget =
+    new AeronTarget(
       stream,
       s"aeron:udp?endpoint=$address:$port|interface=$interface",
       idleStrategy,
@@ -123,8 +125,8 @@ object Target {
     channel: String,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
-    new Target(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronTarget =
+    new AeronTarget(
       stream,
       channel,
       idleStrategy,
@@ -135,8 +137,8 @@ object Target {
     stream: Int,
     address: String,
     port: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
-    Target(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronTarget =
+    AeronTarget(
       stream,
       address,
       port,
