@@ -19,11 +19,11 @@ import java.net.{DatagramPacket, InetAddress, MulticastSocket}
 
 import akka.actor.ActorSystem
 import akka.event.Logging
-import noisecluster.jvm.transport.Source
+import noisecluster.jvm.transport
 
 import scala.util.control.NonFatal
 
-class UdpSource(private val address: String, private val port: Int)(implicit loggingActorSystem: ActorSystem) extends Source {
+class Source(private val address: String, private val port: Int)(implicit loggingActorSystem: ActorSystem) extends transport.Source {
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val socket = new MulticastSocket(port)
   private val group = InetAddress.getByName(address)
@@ -56,6 +56,6 @@ class UdpSource(private val address: String, private val port: Int)(implicit log
   }
 }
 
-object UdpSource {
-  def apply(address: String, port: Int)(implicit loggingActorSystem: ActorSystem): UdpSource = new UdpSource(address, port)
+object Source {
+  def apply(address: String, port: Int)(implicit loggingActorSystem: ActorSystem): Source = new Source(address, port)
 }

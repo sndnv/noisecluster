@@ -19,7 +19,7 @@ import akka.actor.ActorSystem
 import io.aeron.Aeron
 import io.aeron.driver.MediaDriver
 import noisecluster.jvm.test.utils._
-import noisecluster.jvm.transport.aeron.{Defaults, AeronSource, AeronTarget}
+import noisecluster.jvm.transport.aeron.{Source, Target, Defaults}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,8 +40,8 @@ class BasicAeronSpec extends FlatSpec with Matchers {
   private val driver = MediaDriver.launch(Defaults.getNewDriverContext)
   private implicit val aeron = Aeron.connect(Defaults.getNewSystemContext)
 
-  private val source: AeronSource = AeronSource(stream, channel, Defaults.BufferSize)
-  private val target: AeronTarget = AeronTarget(stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit)
+  private val source: Source = Source(stream, channel, Defaults.BufferSize)
+  private val target: Target = Target(stream, channel, Defaults.IdleStrategy, Defaults.FragmentLimit)
 
   private val testByteArraySize = 1000
 

@@ -98,7 +98,7 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
         ,
         params => {
           control.getClusterState.map {
-            state =>
+            state => //TODO - remove state request?
               val message: ControlMessage = (params.service.toLowerCase, params.action.toLowerCase) match {
                 case ("audio", "start") => StartAudio()
                 case ("audio", "stop") => StopAudio()

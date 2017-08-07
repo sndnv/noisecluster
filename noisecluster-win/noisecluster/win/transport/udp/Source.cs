@@ -20,16 +20,16 @@ using log4net;
 
 namespace noisecluster.win.transport.udp
 {
-    public class UdpSource : ISource
+    public class Source : ISource
     {
         private readonly string _address;
         private readonly int _port;
-        private readonly ILog _log = LogManager.GetLogger(typeof(UdpSource));
+        private readonly ILog _log = LogManager.GetLogger(typeof(Source));
         private readonly UdpClient _client;
         private readonly IPAddress _group;
         private readonly IPEndPoint _endPoint;
 
-        public UdpSource(string address, int port)
+        public Source(string address, int port)
         {
             _address = address;
             _port = port;
@@ -38,6 +38,11 @@ namespace noisecluster.win.transport.udp
             _group = IPAddress.Parse(address);
             _client.JoinMulticastGroup(_group);
             _endPoint = new IPEndPoint(_group, port);
+        }
+
+        public bool IsActive()
+        {
+            return true;
         }
 
         //docs - 'offset' is unused

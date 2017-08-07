@@ -22,17 +22,17 @@ using log4net;
 
 namespace noisecluster.win.transport.udp
 {
-    public class UdpTarget : ITarget
+    public class Target : ITarget
     {
         private readonly string _address;
         private readonly int _port;
-        private readonly ILog _log = LogManager.GetLogger(typeof(UdpSource));
+        private readonly ILog _log = LogManager.GetLogger(typeof(Target));
         private int _isRunning; //0 = false; 1 = true
         private readonly UdpClient _client;
         private readonly IPAddress _group;
         private IPEndPoint _endPoint;
 
-        public UdpTarget(string address, int port)
+        public Target(string address, int port)
         {
             _address = address;
             _port = port;

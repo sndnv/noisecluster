@@ -20,16 +20,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import akka.actor.ActorSystem
 import akka.event.Logging
-import noisecluster.jvm.transport.Target
+import noisecluster.jvm.transport
 
-import scala.concurrent.{ExecutionContext, blocking}
+import scala.concurrent.blocking
 import scala.util.control.NonFatal
 
-class UdpTarget(
+class Target(
   private val address: String,
   private val port: Int,
   private val bufferSize: Int
-)(implicit loggingActorSystem: ActorSystem) extends Target {
+)(implicit loggingActorSystem: ActorSystem) extends transport.Target {
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val socket = new MulticastSocket(port)
   private val group = InetAddress.getByName(address)
@@ -95,15 +95,15 @@ class UdpTarget(
   }
 }
 
-object UdpTarget {
+object Target {
   def apply(
     address: String,
     port: Int,
     bufferSize: Int
-  )(implicit loggingActorSystem: ActorSystem): UdpTarget = new UdpTarget(address, port, bufferSize)
+  )(implicit loggingActorSystem: ActorSystem): Target = new Target(address, port, bufferSize)
 
   def apply(
     address: String,
     port: Int
-  )(implicit loggingActorSystem: ActorSystem): UdpTarget = new UdpTarget(address, port, Defaults.BufferSize)
+  )(implicit loggingActorSystem: ActorSystem): Target = new Target(address, port, Defaults.BufferSize)
 }

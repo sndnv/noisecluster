@@ -80,13 +80,23 @@ class Module extends AbstractModule {
     Bridge.init()
     Bridge.LoadAndRegisterAssemblyFrom(new File(appConfig.getString("interopDllPath")))
 
-    val service = new interop.SourceService(
-      appConfig.getInt("transport.stream"),
-      appConfig.getString("transport.address"),
-      appConfig.getInt("transport.port"),
-      if (appConfig.hasPath("transport.interface")) appConfig.getString("transport.interface") else null,
-      true
-    )
+    val service = appConfig.getString("transport.provider") match {
+      case "aeron" =>
+        new interop.SourceService(
+          appConfig.getInt("transport.aeron.stream"),
+          appConfig.getString("transport.aeron.address"),
+          appConfig.getInt("transport.aeron.port"),
+          if (appConfig.hasPath("transport.aeron.interface")) appConfig.getString("transport.aeron.interface") else null,
+          if (appConfig.hasPath("transport.debuggingEnabled")) appConfig.getBoolean("transport.debuggingEnabled") else false
+        )
+
+      case "udp" =>
+        new interop.SourceService(
+          appConfig.getString("transport.udp.address"),
+          appConfig.getInt("transport.udp.port"),
+          if (appConfig.hasPath("transport.debuggingEnabled")) appConfig.getBoolean("transport.debuggingEnabled") else false
+        )
+    }
 
     lifecycle.addStopHook { () =>
       Future {

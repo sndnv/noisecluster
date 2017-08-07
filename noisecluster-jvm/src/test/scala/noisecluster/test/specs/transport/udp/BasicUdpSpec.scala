@@ -17,7 +17,7 @@ package noisecluster.test.specs.transport.udp
 
 import akka.actor.ActorSystem
 import noisecluster.jvm.test.utils._
-import noisecluster.jvm.transport.udp.{Defaults, UdpSource, UdpTarget}
+import noisecluster.jvm.transport.udp.{Defaults, Source, Target}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,8 +36,8 @@ class BasicUdpSpec extends FlatSpec with Matchers {
   private val address = "225.100.50.25"
   private val port = 49042
 
-  private val source: UdpSource = UdpSource(address, port)
-  private val target: UdpTarget = UdpTarget(address, port, Defaults.BufferSize)
+  private val source: Source = Source(address, port)
+  private val target: Target = Target(address, port, Defaults.BufferSize)
 
   private val testByteArraySize = 1000
 

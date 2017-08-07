@@ -22,15 +22,15 @@ using log4net;
 
 namespace noisecluster.win.transport.aeron
 {
-    public class AeronSource : ISource
+    public class Source : ISource
     {
-        private readonly ILog _log = LogManager.GetLogger(typeof(AeronSource));
+        private readonly ILog _log = LogManager.GetLogger(typeof(Source));
         private readonly int _stream;
         private readonly string _channel;
         private readonly UnsafeBuffer _buffer;
         private readonly Publication _publication;
 
-        public AeronSource(Aeron aeron, int stream, string channel, int bufferSize)
+        public Source(Aeron aeron, int stream, string channel, int bufferSize)
         {
             _stream = stream;
             _channel = channel;
@@ -38,7 +38,7 @@ namespace noisecluster.win.transport.aeron
             _publication = aeron.AddPublication(_channel, _stream);
         }
 
-        public AeronSource(Aeron aeron, int stream, string address, int port, int bufferSize)
+        public Source(Aeron aeron, int stream, string address, int port, int bufferSize)
             : this(
                 aeron,
                 stream,
@@ -48,7 +48,7 @@ namespace noisecluster.win.transport.aeron
         {
         }
 
-        public AeronSource(Aeron aeron, int stream, string address, int port, string @interface, int bufferSize)
+        public Source(Aeron aeron, int stream, string address, int port, string @interface, int bufferSize)
             : this(
                 aeron,
                 stream,
@@ -56,6 +56,11 @@ namespace noisecluster.win.transport.aeron
                 bufferSize
             )
         {
+        }
+
+        public bool IsActive()
+        {
+            return IsConnected;
         }
 
         public bool IsConnected

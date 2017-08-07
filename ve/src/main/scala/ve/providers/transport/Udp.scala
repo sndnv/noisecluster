@@ -1,4 +1,4 @@
-﻿/**
+/**
   * Copyright 2017 https://github.com/sndnv
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,21 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
+package ve.providers.transport
 
-using System;
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
+import noisecluster.jvm.transport.{Target, udp}
+import ve.providers.TransportProvider
 
-namespace noisecluster.win.transport
-{
-    public interface ISource : IDisposable
-    {
-        void Send(byte[] source, int offset, int length);
-        void Send(byte[] source);
-        void Close();
-        bool IsActive();
-    }
+class Udp(config: Config)(implicit system: ActorSystem) extends TransportProvider {
+
+  override def createTarget(): Target = {
+    val address: String = config.getString("address")
+    val port: Int = config.getInt("port")
+
+    udp.Target(address, port)
+  }
+
+  override def shutdown(): Unit = {}
 }

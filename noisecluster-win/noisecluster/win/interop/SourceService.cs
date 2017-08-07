@@ -16,61 +16,44 @@
 
 using System;
 using System.Threading;
-using Adaptive.Aeron;
 using log4net;
 using log4net.Config;
 using noisecluster.win.audio.capture;
+using noisecluster.win.interop.providers;
+using noisecluster.win.transport;
 using noisecluster.win.transport.aeron;
+using Adaptive.Aeron;
 
 namespace noisecluster.win.interop
 {
     public class SourceService : IDisposable
     {
-        private readonly int _stream;
-        private readonly string _address;
-        private readonly int _port;
-        private readonly int _bufferSize;
-        private readonly string _interface;
         private readonly ILog _log = LogManager.GetLogger(typeof(SourceService));
-        private readonly Aeron _aeron;
-        private WasapiRecorder _audio;
-        private AeronSource _transport;
-        private int _isTransportRunning; //0 = false; 1 = true
+        private readonly ITransportProvider _transportProvider;
         private readonly WasapiRecorder.DataHandler _dataHandler;
 
-        public SourceService(
-            Aeron.Context systemContext,
-            int stream,
-            string address,
-            int port,
-            int bufferSize,
-            string @interface = null,
-            bool withDebugingHandler = false
-        )
+        private WasapiRecorder _audio;
+        private ISource _transport;
+        private int _isTransportRunning; //0 = false; 1 = true
+
+        private SourceService(ITransportProvider transportProvider, bool withDebugingHandler = false)
         {
             BasicConfigurator.Configure();
-            _aeron = Aeron.Connect(systemContext);
-
-            _stream = stream;
-            _address = address;
-            _port = port;
-            _bufferSize = bufferSize;
-            _interface = @interface;
             _isTransportRunning = 0;
+            _transportProvider = transportProvider;
 
             if (withDebugingHandler)
             {
                 _dataHandler = (data, length) =>
                 {
                     _log.DebugFormat(
-                        "Captured [{0}] bytes of audio data; transport is [{1}], [{2}] and [{3}]; ",
+                        "Captured [{0}] bytes of audio data; transport is [{1}] and [{2}]; ",
                         length,
                         _isTransportRunning == 1 ? "running" : "not running",
-                        _transport.IsConnected ? "connected" : "not connected",
-                        _transport.IsClosed ? "closed" : "not closed"
+                        _transport.IsActive() ? "active" : "not active"
                     );
 
-                    if (_isTransportRunning == 1 && _transport.IsConnected)
+                    if (_isTransportRunning == 1 && _transport.IsActive())
                     {
                         _transport.Send(data, 0, length);
                         _log.DebugFormat("Sent [{0}] bytes of audio data", length);
@@ -81,7 +64,7 @@ namespace noisecluster.win.interop
             {
                 _dataHandler = (data, length) =>
                 {
-                    if (_isTransportRunning == 1 && _transport.IsConnected)
+                    if (_isTransportRunning == 1 && _transport.IsActive())
                     {
                         _transport.Send(data, 0, length);
                     }
@@ -89,36 +72,46 @@ namespace noisecluster.win.interop
             }
         }
 
-        public SourceService(int stream, string address, int port, int bufferSize, string @interface = null,
-            bool withDebugingHandler = false)
-            : this(Defaults.GetNewSystemContext(), stream, address, port, bufferSize, @interface, withDebugingHandler)
+        public SourceService(
+            Aeron.Context systemContext,
+            int stream,
+            string address,
+            int port,
+            int bufferSize,
+            string @interface = null,
+            bool withDebugingHandler = false
+        ) : this(new providers.transport.Aeron(systemContext, stream, address, port, bufferSize, @interface),
+            withDebugingHandler)
         {
         }
 
-        public SourceService(int stream, string address, int port, string @interface = null,
-            bool withDebugingHandler = false)
-            : this(stream, address, port, Defaults.BufferSize, @interface, withDebugingHandler)
+        public SourceService(
+            string address,
+            int port,
+            bool withDebugingHandler = false
+        ) : this(new providers.transport.Udp(address, port), withDebugingHandler)
         {
         }
 
-        public bool IsAudioActive
+        public SourceService(
+            int stream,
+            string address,
+            int port,
+            int bufferSize,
+            string @interface = null,
+            bool withDebugingHandler = false
+        ) : this(Defaults.GetNewSystemContext(), stream, address, port, bufferSize, @interface, withDebugingHandler)
         {
-            get { return _audio != null && _audio.IsActive; }
         }
 
-        public bool IsTransportActive
+        public SourceService(
+            int stream,
+            string address,
+            int port,
+            string @interface = null,
+            bool withDebugingHandler = false
+        ) : this(stream, address, port, Defaults.BufferSize, @interface, withDebugingHandler)
         {
-            get { return _transport != null && _isTransportRunning == 1; }
-        }
-
-        public bool IsTransportConnected
-        {
-            get { return _transport != null && _transport.IsConnected; }
-        }
-
-        public bool IsTransportClosed
-        {
-            get { return _transport != null && _transport.IsClosed; }
         }
 
         public bool StartAudio()
@@ -143,9 +136,7 @@ namespace noisecluster.win.interop
         {
             if (Interlocked.CompareExchange(ref _isTransportRunning, 1, 0) != 0) return false;
 
-            _transport = string.IsNullOrEmpty(_interface)
-                ? new AeronSource(_aeron, _stream, _address, _port, _bufferSize)
-                : new AeronSource(_aeron, _stream, _address, _port, _interface, _bufferSize);
+            _transport = _transportProvider.CreateSource();
             return true;
         }
 
@@ -162,7 +153,7 @@ namespace noisecluster.win.interop
         {
             StopAudio();
             StopTransport();
-            _aeron.Dispose();
+            _transportProvider.Dispose();
         }
     }
 }

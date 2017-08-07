@@ -14,15 +14,29 @@
   * limitations under the License.
   */
 
-using System;
+using noisecluster.win.transport;
+using noisecluster.win.transport.udp;
 
-namespace noisecluster.win.transport
+namespace noisecluster.win.interop.providers.transport
 {
-    public interface ISource : IDisposable
+    public class Udp : ITransportProvider
     {
-        void Send(byte[] source, int offset, int length);
-        void Send(byte[] source);
-        void Close();
-        bool IsActive();
+        private readonly string _address;
+        private readonly int _port;
+
+        public Udp(string address, int port)
+        {
+            _address = address;
+            _port = port;
+        }
+
+        public ISource CreateSource()
+        {
+            return new Source(_address, _port);
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }

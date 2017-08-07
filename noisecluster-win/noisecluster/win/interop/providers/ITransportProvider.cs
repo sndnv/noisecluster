@@ -15,14 +15,12 @@
   */
 
 using System;
+using noisecluster.win.transport;
 
-namespace noisecluster.win.transport
+namespace noisecluster.win.interop.providers
 {
-    public interface ISource : IDisposable
+    public interface ITransportProvider : IDisposable
     {
-        void Send(byte[] source, int offset, int length);
-        void Send(byte[] source);
-        void Close();
-        bool IsActive();
+        ISource CreateSource();
     }
 }

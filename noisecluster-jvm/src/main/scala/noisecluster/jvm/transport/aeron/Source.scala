@@ -20,15 +20,15 @@ import java.nio.ByteBuffer
 import akka.actor.ActorSystem
 import akka.event.Logging
 import io.aeron.{Aeron, Publication}
-import noisecluster.jvm.transport.Source
+import noisecluster.jvm.transport
 import org.agrona.concurrent.UnsafeBuffer
 import org.agrona.{BitUtil, BufferUtil, DirectBuffer}
 
-class AeronSource(
+class Source(
   private val stream: Int,
   private val channel: String,
   private val bufferSize: Int //in bytes
-)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) extends Source {
+)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) extends transport.Source {
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val publication = aeron.addPublication(channel, stream)
   private val buffer = new UnsafeBuffer(BufferUtil.allocateDirectAligned(bufferSize, BitUtil.CACHE_LINE_LENGTH))
@@ -102,14 +102,14 @@ class AeronSource(
   }
 }
 
-object AeronSource {
+object Source {
   def apply(
     stream: Int,
     address: String,
     port: Int,
     bufferSize: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronSource =
-    new AeronSource(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Source =
+    new Source(
       stream,
       s"aeron:udp?endpoint=$address:$port",
       bufferSize
@@ -121,8 +121,8 @@ object AeronSource {
     port: Int,
     interface: String,
     bufferSize: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronSource =
-    new AeronSource(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Source =
+    new Source(
       stream,
       s"aeron:udp?endpoint=$address:$port|interface=$interface",
       bufferSize
@@ -132,8 +132,8 @@ object AeronSource {
     stream: Int,
     channel: String,
     bufferSize: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronSource =
-    new AeronSource(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Source =
+    new Source(
       stream,
       channel,
       bufferSize

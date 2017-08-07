@@ -1,4 +1,4 @@
-﻿/**
+/**
   * Copyright 2017 https://github.com/sndnv
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,12 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
+package ve.providers
 
-using System;
+import noisecluster.jvm.transport.Target
 
-namespace noisecluster.win.transport
-{
-    public interface ISource : IDisposable
-    {
-        void Send(byte[] source, int offset, int length);
-        void Send(byte[] source);
-        void Close();
-        bool IsActive();
-    }
+trait TransportProvider {
+  def createTarget(): Target
+
+  def shutdown(): Unit
 }

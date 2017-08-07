@@ -21,18 +21,18 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import io.aeron._
 import io.aeron.logbuffer._
-import noisecluster.jvm.transport.Target
+import noisecluster.jvm.transport
 import org.agrona.DirectBuffer
 import org.agrona.concurrent._
 
 import scala.concurrent.blocking
 
-class AeronTarget(
+class Target(
   private val stream: Int,
   private val channel: String,
   private val idleStrategy: IdleStrategy,
   private val fragmentLimit: Int
-)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) extends Target {
+)(implicit loggingActorSystem: ActorSystem, aeron: Aeron) extends transport.Target {
   private val isRunning = new AtomicBoolean(false)
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val subscription = aeron.addSubscription(channel, stream)
@@ -91,15 +91,15 @@ class AeronTarget(
   }
 }
 
-object AeronTarget {
+object Target {
   def apply(
     stream: Int,
     address: String,
     port: Int,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronTarget =
-    new AeronTarget(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
+    new Target(
       stream,
       s"aeron:udp?endpoint=$address:$port",
       idleStrategy,
@@ -113,8 +113,8 @@ object AeronTarget {
     interface: String,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronTarget =
-    new AeronTarget(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
+    new Target(
       stream,
       s"aeron:udp?endpoint=$address:$port|interface=$interface",
       idleStrategy,
@@ -126,8 +126,8 @@ object AeronTarget {
     channel: String,
     idleStrategy: IdleStrategy,
     fragmentLimit: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronTarget =
-    new AeronTarget(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
+    new Target(
       stream,
       channel,
       idleStrategy,
@@ -138,8 +138,8 @@ object AeronTarget {
     stream: Int,
     address: String,
     port: Int
-  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): AeronTarget =
-    AeronTarget(
+  )(implicit loggingActorSystem: ActorSystem, aeron: Aeron): Target =
+    Target(
       stream,
       address,
       port,

@@ -19,11 +19,10 @@ import javax.sound.sampled.AudioFormat
 
 import akka.actor.ActorSystem
 import com.typesafe.config.Config
-import io.aeron.Aeron
-import io.aeron.driver.MediaDriver
 import noisecluster.jvm.audio.render.ByteStreamPlayer
 import noisecluster.jvm.control.LocalHandlers
-import noisecluster.jvm.transport.aeron.{Contexts, Defaults, Target}
+import noisecluster.jvm.transport.Target
+import ve.providers.TransportProvider
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,10 +30,6 @@ import scala.sys.process._
 import scala.util.control.NonFatal
 
 class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: ActorSystem) {
-  private val stream: Int = config.getInt("transport.stream")
-  private val address: String = config.getString("transport.address")
-  private val port: Int = config.getInt("transport.port")
-  private val interfaceOpt: Option[String] = if (config.hasPath("transport.interface")) Some(config.getString("transport.interface")) else None
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
   private val hostStopTimeout: Int = config.getInt("host.stopTimeout") //in seconds
   private val audioFormat: AudioFormat = new AudioFormat(
@@ -45,8 +40,10 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
     config.getBoolean("audio.format.bigEndian")
   )
 
-  private val driver = MediaDriver.launch(Contexts.Driver.lowLatency)
-  private implicit val aeron = Aeron.connect(Contexts.System.default)
+  private val transportProvider: TransportProvider = config.getString("transport.provider") match {
+    case "aeron" => new ve.providers.transport.Aeron(config.getConfig("transport.aeron"))
+    case "udp" => new ve.providers.transport.Udp(config.getConfig("transport.udp"))
+  }
 
   private var audioOpt: Option[ByteStreamPlayer] = None
   private var transportOpt: Option[Target] = None
@@ -90,19 +87,20 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
           case Some(audio) =>
             transportOpt match {
               case Some(transport) =>
-                transport.start(audio.write)
+                Future {
+                  transport.start(audio.write)
+                }
 
               case None =>
-                val target = interfaceOpt match {
-                  case Some(interface) =>
-                    Target(stream, address, port, interface, Defaults.IdleStrategy, Defaults.FragmentLimit)
-
-                  case None =>
-                    Target(stream, address, port)
+                val target: Target = config.getString("transport.provider").toLowerCase match {
+                  case "aeron" => transportProvider.createTarget()
+                  case "udp" => transportProvider.createTarget()
                 }
 
                 transportOpt = Some(target)
-                target.start(audio.write)
+                Future {
+                  target.start(audio.write)
+                }
             }
 
           case None =>
@@ -183,16 +181,6 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
       case NonFatal(e) => e.printStackTrace()
     }
 
-    try {
-      aeron.close()
-    } catch {
-      case NonFatal(e) => e.printStackTrace()
-    }
-
-    try {
-      driver.close()
-    } catch {
-      case NonFatal(e) => e.printStackTrace()
-    }
+    transportProvider.shutdown()
   }
 }

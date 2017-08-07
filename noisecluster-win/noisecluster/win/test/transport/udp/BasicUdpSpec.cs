@@ -31,8 +31,8 @@ namespace noisecluster.win.test.transport.udp
 
         private readonly DataHandler _testDataHandler;
 
-        private readonly UdpSource _source;
-        private readonly UdpTarget _target;
+        private readonly Source _source;
+        private readonly Target _target;
 
         private readonly int _testByteArraySize;
 
@@ -50,8 +50,8 @@ namespace noisecluster.win.test.transport.udp
             const string address = "225.100.50.25";
             const int port = 49042;
 
-            _source = new UdpSource(address, port);
-            _target = new UdpTarget(address, port);
+            _source = new Source(address, port);
+            _target = new Target(address, port);
 
             _testByteArraySize = 1000;
 

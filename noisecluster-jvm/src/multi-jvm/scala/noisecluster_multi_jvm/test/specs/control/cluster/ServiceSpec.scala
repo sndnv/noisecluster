@@ -235,9 +235,9 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
               state.pings should be(state.pongs)
           }
 
-        case x if x == targetNode1 => succeed
+        case x if x == targetNode1 => //do nothing
 
-        case x if x == targetNode2 => succeed
+        case x if x == targetNode2 => //do nothing
       }
 
       enterBarrier("post-test-03")

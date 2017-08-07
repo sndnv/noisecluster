@@ -24,10 +24,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 class ApplicationService(config: Config, interop: SourceService)(implicit ec: ExecutionContext, system: ActorSystem) {
-  private val stream: Int = config.getInt("transport.stream")
-  private val address: String = config.getString("transport.address")
-  private val port: Int = config.getInt("transport.port")
-  private val interfaceOpt: Option[String] = if (config.hasPath("transport.interface")) Some(config.getString("transport.interface")) else None
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
 
   val localHandlers = new LocalHandlers {
