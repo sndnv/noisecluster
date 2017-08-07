@@ -146,12 +146,43 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
 
     override def stopHost(restart: Boolean): Future[Boolean] = {
       if (hostStopTimeout > 0) {
-        s"/usr/bin/sudo /sbin/shutdown ${if (restart) "-r" else "-h"} `/bin/date --date 'now + $hostStopTimeout seconds' '+%H:%M'`".! match {
-          case 0 => stopApplication(restart = false)
-          case x => Future.failed(new RuntimeException(s"Unexpected exit code returned by shutdown command: [$x]"))
+        try {
+          s"/usr/bin/sudo /sbin/shutdown ${if (restart) "-r" else "-h"} `/bin/date --date 'now + $hostStopTimeout seconds' '+%H:%M'`".! match {
+            case 0 => stopApplication(restart = false)
+            case x => Future.failed(new RuntimeException(s"Unexpected exit code returned by [shutdown] command: [$x]"))
+          }
+        } catch {
+          case NonFatal(e) => Future.failed(e)
         }
       } else {
         Future.failed(new RuntimeException(s"Host stop/restart is disabled by config"))
+      }
+    }
+
+    override def setHostVolume(level: Int): Future[Boolean] = {
+      Future {
+        s"/usr/bin/pactl -- set-sink-volume 0 $level%".! match {
+          case 0 => true
+          case x => throw new RuntimeException(s"Unexpected exit code returned by [set host volume] command: [$x]")
+        }
+      }
+    }
+
+    override def muteHost(): Future[Boolean] = {
+      Future {
+        s"/usr/bin/pactl -- set-sink-mute 0 1".! match {
+          case 0 => true
+          case x => throw new RuntimeException(s"Unexpected exit code returned by [mute host] command: [$x]")
+        }
+      }
+    }
+
+    override def unmuteHost(): Future[Boolean] = {
+      Future {
+        s"/usr/bin/pactl -- set-sink-mute 0 0".! match {
+          case 0 => true
+          case x => throw new RuntimeException(s"Unexpected exit code returned by [unmute host] command: [$x]")
+        }
       }
     }
   }

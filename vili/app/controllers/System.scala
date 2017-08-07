@@ -112,6 +112,16 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
                 case ("host", "stop") => StopHost(restart = false)
                 case ("host", "restart") => StopHost(restart = true)
 
+                case ("host", "volume") => params.level match {
+                  case Some(level) => SetHostVolume(level)
+                  case None => throw new IllegalArgumentException(
+                    s"No [level] parameter supplied to service [host] and action [volume]"
+                  )
+                }
+
+                case ("host", "mute") => MuteHost()
+                case ("host", "unmute") => UnmuteHost()
+
                 case _ =>
                   throw new IllegalArgumentException(
                     s"Unexpected service [${params.service}] and/or action [${params.action}] requested"
@@ -167,7 +177,7 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
 
 object System {
 
-  case class MessageRequest(target: Option[String], service: String, action: String)
+  case class MessageRequest(target: Option[String], service: String, action: String, level: Option[Int])
 
   case class ClusterActionRequest(target: String, action: String)
 
@@ -176,7 +186,8 @@ object System {
       mapping(
         "target" -> optional(nonEmptyText),
         "service" -> nonEmptyText,
-        "action" -> nonEmptyText
+        "action" -> nonEmptyText,
+        "level" -> optional(number)
       )(MessageRequest.apply)(MessageRequest.unapply)
     )
 

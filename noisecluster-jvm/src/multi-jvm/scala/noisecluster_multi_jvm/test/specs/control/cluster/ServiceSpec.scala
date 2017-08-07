@@ -58,6 +58,8 @@ object ServiceTestConfig extends MultiNodeConfig {
   var calls_restartApplication: Int = 0
   var calls_stopHost: Int = 0
   var calls_restartHost: Int = 0
+  var calls_setVolume: Int = 0
+  var calls_toggleMute: Int = 0
 
   val testHandlers: LocalHandlers = new LocalHandlers {
     override def startAudio(): Future[Boolean] = {
@@ -98,6 +100,27 @@ object ServiceTestConfig extends MultiNodeConfig {
     override def stopTransport(): Future[Boolean] = {
       calls_total += 1
       calls_stopTransport += 1
+
+      Future.successful(true)
+    }
+
+    override def setHostVolume(level: Int): Future[Boolean] = {
+      calls_total += 1
+      calls_setVolume += 1
+
+      Future.successful(true)
+    }
+
+    override def muteHost(): Future[Boolean] = {
+      calls_total += 1
+      calls_toggleMute += 1
+
+      Future.successful(true)
+    }
+
+    override def unmuteHost(): Future[Boolean] = {
+      calls_total += 1
+      calls_toggleMute += 1
 
       Future.successful(true)
     }
@@ -172,11 +195,14 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
         sourceService.forwardMessage(targetNode1.name, Messages.StopApplication(restart = false))
         sourceService.forwardMessage(targetNode2.name, Messages.StopApplication(restart = true))
         sourceService.forwardMessage(Messages.StopHost(restart = true))
+        sourceService.forwardMessage(Messages.SetHostVolume(level = 24))
+        sourceService.forwardMessage(Messages.MuteHost())
+        sourceService.forwardMessage(Messages.UnmuteHost())
       }
 
       runOn(targetNode1, targetNode2) {
         waitUntil(what = "all messages have been processed", waitTimeMs = 1000, waitAttempts = 15) {
-          calls_total == 6
+          calls_total == 9
         }
       }
 
@@ -192,6 +218,8 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
           calls_restartApplication should be(0)
           calls_stopHost should be(0)
           calls_restartHost should be(0)
+          calls_setVolume should be(0)
+          calls_toggleMute should be(0)
 
         case x if x == targetNode1 =>
           calls_startAudio should be(1)
@@ -202,6 +230,8 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
           calls_restartApplication should be(0)
           calls_stopHost should be(0)
           calls_restartHost should be(1)
+          calls_setVolume should be(1)
+          calls_toggleMute should be(2)
 
         case x if x == targetNode2 =>
           calls_startAudio should be(0)
@@ -212,6 +242,8 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
           calls_restartApplication should be(1)
           calls_stopHost should be(0)
           calls_restartHost should be(1)
+          calls_setVolume should be(1)
+          calls_toggleMute should be(2)
       }
     }
 

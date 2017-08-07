@@ -29,4 +29,10 @@ trait LocalHandlers {
   def stopApplication(restart: Boolean): Future[Boolean]
 
   def stopHost(restart: Boolean): Future[Boolean]
+
+  def setHostVolume(level: Int): Future[Boolean]
+
+  def muteHost(): Future[Boolean]
+
+  def unmuteHost(): Future[Boolean]
 }

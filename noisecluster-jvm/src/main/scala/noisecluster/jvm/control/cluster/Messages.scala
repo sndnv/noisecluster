@@ -31,6 +31,12 @@ object Messages {
 
   case class StopHost(restart: Boolean) extends ControlMessage
 
+  case class SetHostVolume(level: Int) extends ControlMessage
+
+  case class MuteHost() extends ControlMessage
+
+  case class UnmuteHost() extends ControlMessage
+
   sealed trait SystemMessage
 
   case class RegisterSource() extends SystemMessage

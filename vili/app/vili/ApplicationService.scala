@@ -87,6 +87,36 @@ class ApplicationService(config: Config, interop: SourceService)(implicit ec: Ex
     override def stopHost(restart: Boolean): Future[Boolean] = {
       Future.failed(new RuntimeException(s"Cannot stop source host"))
     }
+
+    override def setHostVolume(level: Int): Future[Boolean] = {
+      Future {
+        if (interop.SetHostVolume(level)) {
+          true
+        } else {
+          throw new IllegalStateException("Failed to set host volume")
+        }
+      }
+    }
+
+    override def muteHost(): Future[Boolean] = {
+      Future {
+        if (interop.MuteHost()) {
+          true
+        } else {
+          throw new IllegalStateException("Failed to mute host")
+        }
+      }
+    }
+
+    override def unmuteHost(): Future[Boolean] = {
+      Future {
+        if (interop.UnmuteHost()) {
+          true
+        } else {
+          throw new IllegalStateException("Failed to unmute host")
+        }
+      }
+    }
   }
 
   def shutdown(): Unit = {

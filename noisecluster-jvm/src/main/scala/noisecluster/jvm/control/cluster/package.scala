@@ -25,7 +25,9 @@ package object cluster {
     audio: ServiceState,
     transport: ServiceState,
     application: ServiceState,
-    host: ServiceState
+    host: ServiceState,
+    volume: Int,
+    muted: Boolean
   )
 
   case class NodeInfo(

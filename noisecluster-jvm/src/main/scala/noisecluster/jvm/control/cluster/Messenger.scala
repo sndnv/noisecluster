@@ -42,7 +42,9 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
     audio = ServiceState.Stopped,
     transport = ServiceState.Stopped,
     application = ServiceState.Active,
-    host = ServiceState.Active
+    host = ServiceState.Active,
+    volume = 0,
+    muted = false
   )
 
   private def updateLocalState(level: ServiceLevel, state: ServiceState): Unit = {
@@ -56,6 +58,14 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
     localState = newState
   }
 
+  private def updateLocalState(volume: Int): Unit = {
+    localState = localState.copy(volume = volume)
+  }
+
+  private def updateLocalState(muted: Boolean): Unit = {
+    localState = localState.copy(muted = muted)
+  }
+
   protected def getLocalState: NodeState = localState
 
   private var receivers: Actor.Receive = {
@@ -67,13 +77,13 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .startAudio()
         .map {
           result =>
-            self ! Messenger.UpdateLocalState(ServiceLevel.Audio, ServiceState.Active)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Audio, ServiceState.Active)
             result
         }
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while starting audio: [{}]", e)
-            self ! Messenger.UpdateLocalState(ServiceLevel.Audio, previousState)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Audio, previousState)
             throw e
         }
 
@@ -85,13 +95,13 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .stopAudio()
         .map {
           result =>
-            self ! Messenger.UpdateLocalState(ServiceLevel.Audio, ServiceState.Stopped)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Audio, ServiceState.Stopped)
             result
         }
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while stopping audio: [{}]", e)
-            self ! Messenger.UpdateLocalState(ServiceLevel.Audio, previousState)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Audio, previousState)
             throw e
         }
 
@@ -103,13 +113,13 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .startTransport()
         .map {
           result =>
-            self ! Messenger.UpdateLocalState(ServiceLevel.Transport, ServiceState.Active)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Transport, ServiceState.Active)
             result
         }
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while starting transport: [{}]", e)
-            self ! Messenger.UpdateLocalState(ServiceLevel.Transport, previousState)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Transport, previousState)
             throw e
         }
 
@@ -121,13 +131,13 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .stopTransport()
         .map {
           result =>
-            self ! Messenger.UpdateLocalState(ServiceLevel.Transport, ServiceState.Stopped)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Transport, ServiceState.Stopped)
             result
         }
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while stopping transport: [{}]", e)
-            self ! Messenger.UpdateLocalState(ServiceLevel.Transport, previousState)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Transport, previousState)
             throw e
         }
 
@@ -140,7 +150,7 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while [{}] application: [{}]", if (restart) "restarting" else "stopping", e)
-            self ! Messenger.UpdateLocalState(ServiceLevel.Application, previousState)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Application, previousState)
             throw e
         }
 
@@ -153,12 +163,57 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
         .recover {
           case NonFatal(e) =>
             log.error("Exception encountered while [{}] host: [{}]", if (restart) "restarting" else "stopping", e)
-            self ! Messenger.UpdateLocalState(ServiceLevel.Host, previousState)
+            self ! Messenger.UpdateLocalStateWithServiceLevel(ServiceLevel.Host, previousState)
             throw e
         }
 
-    case Messenger.UpdateLocalState(level, state) =>
+    case Messages.SetHostVolume(level) =>
+      val previousState = localState.volume
+      updateLocalState(level)
+
+      localHandlers
+        .setHostVolume(level)
+        .recover {
+          case NonFatal(e) =>
+            log.error("Exception encountered while setting host volume: [{}]", e)
+            self ! Messenger.UpdateLocalStateWithVolume(previousState)
+            throw e
+        }
+
+    case Messages.MuteHost() =>
+      val previousState = localState.muted
+      updateLocalState(muted = true)
+
+      localHandlers
+        .muteHost()
+        .recover {
+          case NonFatal(e) =>
+            log.error("Exception encountered while muting host: [{}]", e)
+            self ! Messenger.UpdateLocalStateWithMuted(previousState)
+            throw e
+        }
+
+    case Messages.UnmuteHost() =>
+      val previousState = localState.muted
+      updateLocalState(muted = false)
+
+      localHandlers
+        .unmuteHost()
+        .recover {
+          case NonFatal(e) =>
+            log.error("Exception encountered while unmuting host: [{}]", e)
+            self ! Messenger.UpdateLocalStateWithMuted(previousState)
+            throw e
+        }
+
+    case Messenger.UpdateLocalStateWithServiceLevel(level, state) =>
       updateLocalState(level, state)
+
+    case Messenger.UpdateLocalStateWithVolume(level) =>
+      updateLocalState(level)
+
+    case Messenger.UpdateLocalStateWithMuted(muted) =>
+      updateLocalState(muted)
   }
 
   protected def addReceiver(next: Actor.Receive): Unit = {
@@ -170,6 +225,10 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
 
 object Messenger {
 
-  private case class UpdateLocalState(level: ServiceLevel, state: ServiceState)
+  private case class UpdateLocalStateWithServiceLevel(level: ServiceLevel, state: ServiceState)
+
+  private case class UpdateLocalStateWithVolume(volume: Int)
+
+  private case class UpdateLocalStateWithMuted(muted: Boolean)
 
 }
