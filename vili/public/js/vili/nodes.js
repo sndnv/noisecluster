@@ -18,6 +18,14 @@ define(["utils"],
         function Nodes() {
         }
 
+        Nodes.sendVolume = function (e) {
+            var nodeName = $(e.currentTarget).parent().attr("data-node-name");
+            var level = $(e.currentTarget).parent().attr("data-volume-level");
+
+            var requestData = {"target": nodeName, "service": "host", "action": "volume", "level": level};
+            utils.postMessage(requestData);
+        };
+
         Nodes.sendMessage = function (e) {
             var nodeName = $(e.currentTarget).attr("data-node-name");
             var nodeState = $(e.currentTarget).attr("data-node-state");
@@ -45,7 +53,7 @@ define(["utils"],
             utils.postMessage(requestData);
         };
 
-        Nodes.buildButton = function (nodeName, nodeState, serviceName, requestedAction, buttonState, icon) {
+        Nodes.buildButton = function (nodeName, nodeState, serviceName, requestedAction, buttonState, buttonClass, icon) {
             return $("<div></div>", {})
                 .append($("<div></div>", {
                         "class": "vili-button-large",
@@ -57,7 +65,7 @@ define(["utils"],
                         "data-node-service-action": requestedAction
                     })
                         .append($("<div></div>", {"class": "vili-button-middle"})
-                            .append($("<div></div>", {"class": "vili-button-inner " + buttonState})
+                            .append($("<div></div>", {"class": "vili-button-inner " + buttonClass})
                                 .append($("<div></div>", {"class": "vili-button-label"})
                                     .append($("<span></span>", {"uk-icon": "icon: " + icon + "; ratio: 2"}))
                                 )
@@ -66,7 +74,18 @@ define(["utils"],
                 );
         };
 
-        Nodes.buildSubContainer = function (nodeName, nodeState, serviceName, serviceState) {
+        Nodes.buildVolumeBar = function (nodeName, volume) {
+            return $("<div></div>", {
+                    "class": "vili-volume-container",
+                    "data-node-name": nodeName,
+                    "data-volume-level": volume,
+                })
+                .append($("<div></div>", {"class": "vili-volume-bar"})
+                    .append($("<span></span>", {"class": "vili-volume-slider", "style": "width: " + volume + "%;"}))
+                )
+        };
+
+        Nodes.buildSubContainer = function (nodeName, nodeState, serviceName, serviceState, volume, muted) {
             var subContainerState = "";
             var startButtonState = "";
             var stopButtonState = "";
@@ -90,16 +109,49 @@ define(["utils"],
                     break;
             }
 
+            var buttons = $("<div></div>", {"class": "uk-grid uk-flex-center"});
+            switch (serviceName) {
+                case "Audio":
+                    buttons
+                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "start", startButtonState, startButtonState, "upload"))
+                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "stop", stopButtonState, stopButtonState, "download"))
+
+                    if(muted === false) {
+                        buttons.append(Nodes.buildButton(nodeName, nodeState, "host", "mute", "active", "active", "rss"))
+                    } else if(muted === true) {
+                        buttons.append(Nodes.buildButton(nodeName, nodeState, "host", "unmute", "active", "inactive", "rss"))
+                    }
+
+                    if(!isNaN(volume)) {
+                        buttons.append(Nodes.buildVolumeBar(nodeName, volume))
+                    }
+                    break;
+
+                case "Transport":
+                    buttons
+                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "start", startButtonState, startButtonState, "upload"))
+                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "stop", stopButtonState, stopButtonState, "download"))
+                    break;
+
+                case "Application":
+                    buttons
+                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "stop", stopButtonState, stopButtonState, "download"))
+                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "restart", restartButtonState, restartButtonState, "refresh"))
+                    break;
+
+                case "Host":
+                    buttons
+                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "stop", stopButtonState, stopButtonState, "download"))
+                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "restart", restartButtonState, restartButtonState, "refresh"))
+                    break;
+            }
+
             return $("<div></div>", {"class": "vili-sub-container-" + subContainerState})
                 .append($("<div></div>", {"class": "vili-sub-header"})
                     .append($("<div></div>", {"text": serviceName}))
                 )
                 .append($("<div></div>", {"class": "vili-sub-content"})
-                    .append($("<div></div>", {"class": "uk-grid uk-flex-center"})
-                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "start", startButtonState, "upload"))
-                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "stop", stopButtonState, "download"))
-                        .append(Nodes.buildButton(nodeName, nodeState, serviceName, "restart", restartButtonState, "refresh"))
-                    )
+                    .append(buttons)
                     .append($("<div></div>", {"class": "vili-sub-state"})
                         .append($("<div></div>", {"text": serviceState}))
                     )
@@ -113,7 +165,7 @@ define(["utils"],
                 containerState = utils.getClassFromState(serviceStates);
                 containerContent =
                     $("<div></div>", {"class": "vili-container-content"})
-                        .append(Nodes.buildSubContainer(nodeName, containerState, "Audio", serviceStates.audio))
+                        .append(Nodes.buildSubContainer(nodeName, containerState, "Audio", serviceStates.audio, serviceStates.volume, serviceStates.muted))
                         .append(Nodes.buildSubContainer(nodeName, containerState, "Transport", serviceStates.transport))
                         .append(Nodes.buildSubContainer(nodeName, containerState, "Application", serviceStates.application))
                         .append(Nodes.buildSubContainer(nodeName, containerState, "Host", serviceStates.host));
@@ -141,6 +193,24 @@ define(["utils"],
                 );
         };
 
+        Nodes.updateVolume = function (e) {
+            var pct;
+            var volumeBar = $(e.currentTarget).closest(".vili-volume-bar");
+
+             var position = e.pageX - volumeBar.offset().left;
+             pct = 100 * position / volumeBar.width();
+
+             if (pct > 100) {
+                 pct = 100;
+             }
+             if (pct < 0) {
+                 pct = 0;
+             }
+
+             volumeBar.find(".vili-volume-slider").css("width", pct + "%");
+             volumeBar.closest(".vili-volume-container").attr("data-volume-level", pct | 0);
+        };
+
         Nodes.updateView = function () {
             var nodeContainer = $(".vili-nodes-node-container");
 
@@ -148,6 +218,26 @@ define(["utils"],
                 var target = $(e.currentTarget);
                 target.toggleClass("active");
                 target.next().toggle({"duration": 0});
+            });
+
+            var isDragging = false;
+            $(nodeContainer).on("mousedown", ".vili-volume-bar", function (e) {
+                isDragging = true;
+                Nodes.updateVolume(e);
+            });
+
+            $(nodeContainer).on("mouseup", ".vili-volume-bar", function (e) {
+                if (isDragging) {
+                    isDragging = false;
+                    Nodes.updateVolume(e);
+                    Nodes.sendVolume(e);
+                }
+            });
+
+            $(nodeContainer).on("mousemove", ".vili-volume-bar", function (e) {
+                if (isDragging) {
+                    Nodes.updateVolume(e);
+                }
             });
 
             utils.getStatus()
@@ -162,10 +252,12 @@ define(["utils"],
 
                     var targets = result.state.targets;
                     for (var target in targets) {
+                        var targetData = targets[target] || {};
+
                         nodeContainer.append(
                             Nodes.buildContainer(
                                 target,
-                                targets[target].state
+                                targetData.state || {}
                             )
                         );
                     }

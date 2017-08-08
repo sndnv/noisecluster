@@ -32,13 +32,13 @@ define(["utils"],
                 return;
             }
 
-            var requestedState = "restart";
+            var requestedState = "";
             switch (audioState) {
                 case 'Active':
-                    requestedState = "stop";
+                    requestedState = "quiet";
                     break;
                 case 'Stopped':
-                    requestedState = "start";
+                    requestedState = "play";
                     break;
                 default:
                     utils.showMessage(

@@ -97,48 +97,49 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
         }
         ,
         params => {
-          control.getClusterState.map {
-            state => //TODO - remove state request?
-              val message: ControlMessage = (params.service.toLowerCase, params.action.toLowerCase) match {
-                case ("audio", "start") => StartAudio()
-                case ("audio", "stop") => StopAudio()
+          try {
+            val messages: Seq[ControlMessage] = (params.service.toLowerCase, params.action.toLowerCase) match {
+              case ("audio", "start") => Seq(StartAudio())
+              case ("audio", "stop") => Seq(StopAudio())
+              case ("audio", "play") => Seq(StartAudio(), UnmuteHost())
+              case ("audio", "quiet") => Seq(StopAudio(), MuteHost())
 
-                case ("transport", "start") => StartTransport()
-                case ("transport", "stop") => StopTransport()
+              case ("transport", "start") => Seq(StartTransport())
+              case ("transport", "stop") => Seq(StopTransport())
 
-                case ("application", "stop") => StopApplication(restart = false)
-                case ("application", "restart") => StopApplication(restart = true)
+              case ("application", "stop") => Seq(StopApplication(restart = false))
+              case ("application", "restart") => Seq(StopApplication(restart = true))
 
-                case ("host", "stop") => StopHost(restart = false)
-                case ("host", "restart") => StopHost(restart = true)
+              case ("host", "stop") => Seq(StopHost(restart = false))
+              case ("host", "restart") => Seq(StopHost(restart = true))
 
-                case ("host", "volume") => params.level match {
-                  case Some(level) => SetHostVolume(level)
-                  case None => throw new IllegalArgumentException(
-                    s"No [level] parameter supplied to service [host] and action [volume]"
-                  )
-                }
-
-                case ("host", "mute") => MuteHost()
-                case ("host", "unmute") => UnmuteHost()
-
-                case _ =>
-                  throw new IllegalArgumentException(
-                    s"Unexpected service [${params.service}] and/or action [${params.action}] requested"
-                  )
+              case ("host", "volume") => params.level match {
+                case Some(level) => Seq(SetHostVolume(level))
+                case None => throw new IllegalArgumentException(
+                  s"No [level] parameter supplied to service [host] and action [volume]"
+                )
               }
 
-              params.target match {
-                case Some("self") => control.processMessage(message)
-                case Some(target) => control.forwardMessage(target, message)
-                case None => control.forwardMessage(message)
-              }
+              case ("host", "mute") => Seq(MuteHost())
+              case ("host", "unmute") => Seq(UnmuteHost())
 
-              NoContent
-          }.recover {
+              case _ =>
+                throw new IllegalArgumentException(
+                  s"Unexpected service [${params.service}] and/or action [${params.action}] requested"
+                )
+            }
+
+            params.target match {
+              case Some("self") => messages.foreach { message => control.processMessage(message) }
+              case Some(target) => messages.foreach { message => control.forwardMessage(target, message) }
+              case None => messages.foreach { message => control.forwardMessage(message) }
+            }
+
+            Future.successful(NoContent)
+          } catch {
             case NonFatal(e) =>
               e.printStackTrace()
-              InternalServerError(s"Exception encountered: [$e]")
+              Future.successful(InternalServerError(s"Exception encountered: [$e]"))
           }
         }
       )

@@ -63,15 +63,20 @@ class Module extends AbstractModule {
 
   @Provides
   @Singleton
-  def provideMediaDriver(): MediaDriver = {
-    MediaDriver.launch(Contexts.Driver.lowLatency)
+  def provideMediaDriver(): Option[MediaDriver] = {
+    val appConfig = ConfigFactory.load.getConfig("noisecluster.vili")
+
+    appConfig.getString("transport.provider") match {
+      case "aeron" => Some(MediaDriver.launch(Contexts.Driver.lowLatency))
+      case "udp" => None
+    }
   }
 
   @Provides
   @Singleton
   def provideInteropService(
     lifecycle: ApplicationLifecycle,
-    driver: MediaDriver
+    driver: Option[MediaDriver]
   )(implicit ec: ExecutionContext): interop.SourceService = {
     val baseConfig = ConfigFactory.load()
     val appConfig = baseConfig.getConfig("noisecluster.vili")
@@ -107,7 +112,7 @@ class Module extends AbstractModule {
         }
 
         try {
-          driver.close()
+          driver.foreach(_.close())
         } catch {
           case NonFatal(e) => e.printStackTrace()
         }
@@ -123,7 +128,6 @@ class Module extends AbstractModule {
     lifecycle: ApplicationLifecycle,
     interopService: interop.SourceService
   )(implicit ec: ExecutionContext, system: ActorSystem): ApplicationService = {
-    //TODO - ? implicit val system = ActorSystem("vili")
     val appConfig = ConfigFactory.load().getConfig("noisecluster.vili")
     val service = new ApplicationService(appConfig, interopService)
     lifecycle.addStopHook { () => Future.successful(service.shutdown()) }
