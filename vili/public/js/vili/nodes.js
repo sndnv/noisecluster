@@ -181,7 +181,7 @@ define(["utils"],
                 displayName = "src0";
             }
 
-            return $("<div></div>", {"class": "uk-width-1-3"})
+            return $("<div></div>", {"class": "uk-width-1-1 uk-width-1-2@s uk-width-1-3@m"})
                 .append($("<div></div>", {"class": "vili-container-" + containerState})
                     .append($("<div></div>", {"class": "vili-container-header"})
                         .append($("<div></div>", {"class": "vili-container-header-left"}))
