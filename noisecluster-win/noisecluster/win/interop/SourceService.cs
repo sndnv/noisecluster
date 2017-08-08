@@ -23,7 +23,6 @@ using noisecluster.win.interop.providers;
 using noisecluster.win.transport;
 using noisecluster.win.transport.aeron;
 using Adaptive.Aeron;
-using AudioSwitcher.AudioApi.CoreAudio;
 
 namespace noisecluster.win.interop
 {
@@ -33,7 +32,6 @@ namespace noisecluster.win.interop
         private readonly ITransportProvider _transportProvider;
         private readonly WasapiRecorder.DataHandler _dataHandler;
 
-        private readonly CoreAudioDevice _hostAudioDevice = new CoreAudioController().DefaultPlaybackDevice;
         private WasapiRecorder _audio;
         private ISource _transport;
         private int _isTransportRunning; //0 = false; 1 = true
@@ -153,19 +151,22 @@ namespace noisecluster.win.interop
 
         public bool SetHostVolume(int level)
         {
-            _hostAudioDevice.SetVolumeAsync((double)level/100);
+            if (_audio == null) return false;
+            _audio.Volume.SetMasterVolumeLevelScalar((float) level / 100, Guid.Empty);
             return true;
         }
 
         public bool MuteHost()
         {
-            _hostAudioDevice.SetMuteAsync(true);
+            if (_audio == null) return false;
+            _audio.Volume.SetMute(true, Guid.Empty);
             return true;
         }
 
         public bool UnmuteHost()
         {
-            _hostAudioDevice.SetMuteAsync(false);
+            if (_audio == null) return false;
+            _audio.Volume.SetMute(false, Guid.Empty);
             return true;
         }
 

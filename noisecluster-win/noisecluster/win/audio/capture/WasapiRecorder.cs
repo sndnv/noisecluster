@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using CSCore;
+using CSCore.CoreAudioAPI;
 using CSCore.SoundIn;
 using CSCore.Streams;
 using log4net;
@@ -29,6 +30,7 @@ namespace noisecluster.win.audio.capture
         private int _isRunning; //0 = false; 1 = true
         private bool _hasHandler;
         private readonly WasapiCapture _capture;
+        private readonly AudioEndpointVolume _volume;
         private readonly SoundInSource _soundInSource;
         private readonly IWaveSource _convertedSource;
 
@@ -38,6 +40,7 @@ namespace noisecluster.win.audio.capture
         {
             _capture = new WasapiLoopbackCapture();
             _capture.Initialize();
+            _volume = AudioEndpointVolume.FromDevice(_capture.Device);
 
             _soundInSource = new SoundInSource(_capture) {FillWithZeros = false};
 
@@ -73,6 +76,11 @@ namespace noisecluster.win.audio.capture
             {
                 throw new ArgumentException("Cannot attach null handler");
             }
+        }
+
+        public AudioEndpointVolume Volume
+        {
+            get { return _volume; }
         }
 
         public WaveFormat SourceFormat
