@@ -102,7 +102,7 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
               case ("audio", "start") => Seq(StartAudio())
               case ("audio", "stop") => Seq(StopAudio())
               case ("audio", "play") => Seq(StartAudio(), UnmuteHost())
-              case ("audio", "quiet") => Seq(StopAudio(), MuteHost())
+              case ("audio", "quiet") => Seq(MuteHost(), StopAudio())
 
               case ("transport", "start") => Seq(StartTransport())
               case ("transport", "stop") => Seq(StopTransport())

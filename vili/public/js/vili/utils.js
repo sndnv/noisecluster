@@ -19,7 +19,7 @@ define([],
         function Utils() {
         }
 
-        Utils.post = function (uri, data) {
+        Utils.post = function (uri, data, reload = true) {
             var headers = {
                 "Csrf-Token": $("#csrfToken").attr("data-token-value")
             };
@@ -30,13 +30,15 @@ define([],
                 headers: headers,
                 data: data
             })
-                .done(function (result) {
+            .done(function (result) {
+                if(reload === true) {
                     window.location.reload();
-                })
-                .fail(function (xhr, status, error) {
-                    console.error("Operation failed with status [" + xhr.status + "] and message [" + error + " / " + xhr.responseText + "]");
-                    Utils.prototype.showMessage("error", xhr.responseText, error);
-                });
+                }
+            })
+            .fail(function (xhr, status, error) {
+                console.error("Operation failed with status [" + xhr.status + "] and message [" + error + " / " + xhr.responseText + "]");
+                Utils.prototype.showMessage("error", xhr.responseText, error);
+            });
         };
 
         Utils.prototype.getStatus = function () {
@@ -46,12 +48,12 @@ define([],
             });
         };
 
-        Utils.prototype.postMessage = function (data) {
-            return Utils.post("/process-message", data);
+        Utils.prototype.postMessage = function (data, reload = true) {
+            return Utils.post("/process-message", data, reload);
         };
 
-        Utils.prototype.postClusterAction = function (data) {
-            return Utils.post("/process-cluster-action", data);
+        Utils.prototype.postClusterAction = function (data, reload = true) {
+            return Utils.post("/process-cluster-action", data, reload);
         };
 
         Utils.prototype.getClassFromState = function (state) {

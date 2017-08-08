@@ -23,7 +23,7 @@ define(["utils"],
             var level = $(e.currentTarget).parent().attr("data-volume-level");
 
             var requestData = {"target": nodeName, "service": "host", "action": "volume", "level": level};
-            utils.postMessage(requestData);
+            utils.postMessage(requestData, false);
         };
 
         Nodes.sendMessage = function (e) {

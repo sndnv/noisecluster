@@ -22,48 +22,62 @@ import noisecluster.win.interop.SourceService
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 class ApplicationService(config: Config, interop: SourceService)(implicit ec: ExecutionContext, system: ActorSystem) {
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
 
   val localHandlers = new LocalHandlers {
     override def startAudio(): Future[Boolean] = {
-      Future {
+      try {
         if (interop.StartAudio()) {
-          true
-        } else {
-          throw new IllegalStateException("Failed to start audio capture")
+          Future.successful(true)
         }
+        else {
+          Future.failed(new IllegalStateException("Failed to start audio capture"))
+        }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
       }
     }
 
     override def stopAudio(): Future[Boolean] = {
-      Future {
+      try {
         if (interop.StopAudio()) {
-          true
+          Future.successful(true)
         } else {
-          throw new IllegalStateException("Failed to stop audio capture")
+          Future.failed(new IllegalStateException("Failed to stop audio capture"))
         }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
       }
     }
 
     override def startTransport(): Future[Boolean] = {
-      Future {
+      try {
         if (interop.StartTransport()) {
-          true
+          Future.successful(true)
         } else {
-          throw new IllegalStateException("Failed to start transport")
+          Future.failed(new IllegalStateException("Failed to start transport"))
         }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
       }
     }
 
     override def stopTransport(): Future[Boolean] = {
-      Future {
+      try {
         if (interop.StopTransport()) {
-          true
+          Future.successful(true)
         } else {
-          throw new IllegalStateException("Failed to stop transport")
+          Future.failed(new IllegalStateException("Failed to stop transport"))
         }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
       }
     }
 
@@ -89,32 +103,41 @@ class ApplicationService(config: Config, interop: SourceService)(implicit ec: Ex
     }
 
     override def setHostVolume(level: Int): Future[Boolean] = {
-      Future {
+      try {
         if (interop.SetHostVolume(level)) {
-          true
+          Future.successful(true)
         } else {
-          throw new IllegalStateException("Failed to set host volume")
+          Future.failed(new IllegalStateException("Failed to set host volume"))
         }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
       }
     }
 
     override def muteHost(): Future[Boolean] = {
-      Future {
+      try {
         if (interop.MuteHost()) {
-          true
+          Future.successful(true)
         } else {
-          throw new IllegalStateException("Failed to mute host")
+          Future.failed(new IllegalStateException("Failed to mute host"))
         }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
       }
     }
 
     override def unmuteHost(): Future[Boolean] = {
-      Future {
+      try {
         if (interop.UnmuteHost()) {
-          true
+          Future.successful(true)
         } else {
-          throw new IllegalStateException("Failed to unmute host")
+          Future.failed(new IllegalStateException("Failed to unmute host"))
         }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
       }
     }
   }
