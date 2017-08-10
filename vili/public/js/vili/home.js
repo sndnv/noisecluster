@@ -20,7 +20,7 @@ define(["utils"],
 
         Home.toggleAudio = function (e) {
             var nodeName = $(e.currentTarget).attr("data-node-name");
-            var audioState = $(e.currentTarget).attr("data-node-audio-state");
+            var audioState = $(e.currentTarget).attr("data-node-service-state");
             var nodeState = $(e.currentTarget).attr("data-node-state");
 
             if (nodeState === "transition") {
@@ -55,8 +55,13 @@ define(["utils"],
 
         Home.buildButton = function (nodeName, serviceStates, label, nodeState) {
             var buttonClass = nodeState;
-            if (nodeName === "self" && nodeState === "active") {
-                buttonClass = "important";
+            var serviceState = serviceStates.audio;
+            if (nodeName === "self") {
+                if(nodeState === "active") {
+                    buttonClass = "important";
+                }
+            } else {
+                serviceState = serviceStates.transport;
             }
 
             return $("<li></li>", {})
@@ -64,7 +69,7 @@ define(["utils"],
                         "class": "vili-button-xlarge",
                         "click": Home.toggleAudio,
                         "data-node-name": nodeName,
-                        "data-node-audio-state": serviceStates.audio,
+                        "data-node-service-state": serviceState,
                         "data-node-state": nodeState
                     })
                         .append($("<div></div>", {"class": "vili-button-middle"})

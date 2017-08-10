@@ -99,19 +99,17 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
         params => {
           try {
             val messages: Seq[ControlMessage] = (params.service.toLowerCase, params.action.toLowerCase) match {
-              case ("audio", "start") => Seq(StartAudio())
-              case ("audio", "stop") => Seq(StopAudio())
-              case ("audio", "play") => Seq(StartAudio(), UnmuteHost())
-              case ("audio", "quiet") => Seq(MuteHost(), StopAudio())
+              case ("audio", "play") => if(params.target.getOrElse("") == "self") {
+                Seq(StartAudio(), UnmuteHost())
+              } else {
+                Seq(StartTransport(), UnmuteHost())
+              }
 
-              case ("transport", "start") => Seq(StartTransport())
-              case ("transport", "stop") => Seq(StopTransport())
-
-              case ("application", "stop") => Seq(StopApplication(restart = false))
-              case ("application", "restart") => Seq(StopApplication(restart = true))
-
-              case ("host", "stop") => Seq(StopHost(restart = false))
-              case ("host", "restart") => Seq(StopHost(restart = true))
+              case ("audio", "quiet") => if(params.target.getOrElse("") == "self") {
+                Seq(MuteHost(), StopAudio())
+              } else {
+                Seq(MuteHost(), StopTransport())
+              }
 
               case ("host", "volume") => params.level match {
                 case Some(level) => Seq(SetHostVolume(level))
@@ -122,6 +120,15 @@ class System @Inject()(control: SourceService, appService: vili.ApplicationServi
 
               case ("host", "mute") => Seq(MuteHost())
               case ("host", "unmute") => Seq(UnmuteHost())
+
+              case ("audio", "start") => Seq(StartAudio())
+              case ("audio", "stop") => Seq(StopAudio())
+              case ("transport", "start") => Seq(StartTransport())
+              case ("transport", "stop") => Seq(StopTransport())
+              case ("application", "stop") => Seq(StopApplication(restart = false))
+              case ("application", "restart") => Seq(StopApplication(restart = true))
+              case ("host", "stop") => Seq(StopHost(restart = false))
+              case ("host", "restart") => Seq(StopHost(restart = true))
 
               case _ =>
                 throw new IllegalArgumentException(
