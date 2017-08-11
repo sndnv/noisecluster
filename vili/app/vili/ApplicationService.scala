@@ -26,11 +26,13 @@ import scala.util.control.NonFatal
 
 class ApplicationService(config: Config, interop: SourceService)(implicit ec: ExecutionContext, system: ActorSystem) {
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
+  private val sampleRate: Int = config.getInt("audio.format.sampleRate")
+  private val sampleSizeInBits: Int = config.getInt("audio.format.sampleSizeInBits")
 
   val localHandlers = new LocalHandlers {
     override def startAudio(): Future[Boolean] = {
       try {
-        if (interop.StartAudio()) {
+        if (interop.StartAudio(sampleRate, sampleSizeInBits)) {
           Future.successful(true)
         }
         else {

@@ -36,7 +36,7 @@ namespace noisecluster.win.audio.capture
 
         public delegate void DataHandler(byte[] data, int length);
 
-        public WasapiRecorder(DataHandler handler = null)
+        public WasapiRecorder(int sampleRate, int bitsPerSample, DataHandler handler = null)
         {
             _capture = new WasapiLoopbackCapture();
             _capture.Initialize();
@@ -45,9 +45,9 @@ namespace noisecluster.win.audio.capture
             _soundInSource = new SoundInSource(_capture) {FillWithZeros = false};
 
             _convertedSource = _soundInSource
-                .ChangeSampleRate(48000) //TODO - from config
+                .ChangeSampleRate(sampleRate)
                 .ToSampleSource()
-                .ToWaveSource(16) //TODO - from config
+                .ToWaveSource(bitsPerSample)
                 .ToStereo();
 
             WithDataHandler(handler);

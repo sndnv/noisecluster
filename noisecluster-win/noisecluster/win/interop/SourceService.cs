@@ -114,11 +114,11 @@ namespace noisecluster.win.interop
         {
         }
 
-        public bool StartAudio()
+        public bool StartAudio(int sampleRate, int bitsPerSample)
         {
             if (_audio != null || _transport == null) return false;
 
-            _audio = new WasapiRecorder(_dataHandler);
+            _audio = new WasapiRecorder(sampleRate, bitsPerSample, _dataHandler);
             _audio.Start();
             return true;
         }
