@@ -22,7 +22,8 @@ using noisecluster.win.audio.capture;
 using noisecluster.win.interop.providers;
 using noisecluster.win.transport;
 using noisecluster.win.transport.aeron;
-using Adaptive.Aeron;
+using noisecluster.win.interop.providers.transport;
+using Aeron = Adaptive.Aeron.Aeron;
 
 namespace noisecluster.win.interop
 {
@@ -90,7 +91,15 @@ namespace noisecluster.win.interop
             int multicastTargetPort,
             int localPort,
             bool withDebugingHandler = false
-        ) : this(new providers.transport.Udp(multicastTargetAddress, multicastTargetPort, localPort),
+        ) : this(new providers.transport.MulticastUdp(multicastTargetAddress, multicastTargetPort, localPort),
+            withDebugingHandler)
+        {
+        }
+
+        public SourceService(
+            int localPort,
+            bool withDebugingHandler = false
+        ) : this(new providers.transport.UnicastUdp(localPort),
             withDebugingHandler)
         {
         }
@@ -114,6 +123,20 @@ namespace noisecluster.win.interop
             bool withDebugingHandler = false
         ) : this(stream, address, port, Defaults.BufferSize, @interface, withDebugingHandler)
         {
+        }
+
+        public bool AddUnicastTarget(string targetAddress, int targetPort)
+        {
+            var unicastTransportProvider = _transportProvider as UnicastUdp;
+            if (unicastTransportProvider != null)
+            {
+                unicastTransportProvider.AddTarget(targetAddress, targetPort);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public bool StartAudio(int sampleRate, int bitsPerSample)

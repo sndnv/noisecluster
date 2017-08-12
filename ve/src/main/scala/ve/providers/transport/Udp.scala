@@ -23,10 +23,17 @@ import ve.providers.TransportProvider
 class Udp(config: Config)(implicit system: ActorSystem) extends TransportProvider {
 
   override def createTarget(): Target = {
-    val address: String = config.getString("address")
+    val addressOpt: Option[String] = if(config.hasPath("address")) {
+      Some(config.getString("address"))
+    } else {
+      None
+    }
     val port: Int = config.getInt("port")
 
-    udp.Target(address, port)
+    addressOpt match {
+      case Some(address) => udp.Target(address, port)
+      case None => udp.Target(port)
+    }
   }
 
   override def shutdown(): Unit = {}

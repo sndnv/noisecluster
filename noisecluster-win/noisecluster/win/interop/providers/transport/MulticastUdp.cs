@@ -19,13 +19,13 @@ using noisecluster.win.transport.udp;
 
 namespace noisecluster.win.interop.providers.transport
 {
-    public class Udp : ITransportProvider
+    public class MulticastUdp : ITransportProvider
     {
         private readonly string _multicastTargetAddress;
         private readonly int _multicastTargetPort;
         private readonly int _localPort;
 
-        public Udp(string multicastTargetAddress, int multicastTargetPort, int localPort)
+        public MulticastUdp(string multicastTargetAddress, int multicastTargetPort, int localPort)
         {
             _multicastTargetAddress = multicastTargetAddress;
             _multicastTargetPort = multicastTargetPort;

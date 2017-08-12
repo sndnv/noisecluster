@@ -68,7 +68,8 @@ class Module extends AbstractModule {
 
     appConfig.getString("transport.provider") match {
       case "aeron" => Some(MediaDriver.launch(Contexts.Driver.lowLatency))
-      case "udp" => None
+      case "multicast-udp" => None
+      case "unicast-udp" => None
     }
   }
 
@@ -95,12 +96,30 @@ class Module extends AbstractModule {
           if (appConfig.hasPath("transport.debuggingEnabled")) appConfig.getBoolean("transport.debuggingEnabled") else false
         )
 
-      case "udp" =>
+      case "multicast-udp" =>
         new interop.SourceService(
-          appConfig.getString("transport.udp.address"),
-          appConfig.getInt("transport.udp.port"),
+          appConfig.getString("transport.udp.multicast-target.address"),
+          appConfig.getInt("transport.udp.multicast-target.port"),
+          appConfig.getInt("transport.udp.localPort"),
           if (appConfig.hasPath("transport.debuggingEnabled")) appConfig.getBoolean("transport.debuggingEnabled") else false
         )
+
+      case "unicast-udp" =>
+        val svc = new interop.SourceService(
+          appConfig.getInt("transport.udp.localPort"),
+          if (appConfig.hasPath("transport.debuggingEnabled")) appConfig.getBoolean("transport.debuggingEnabled") else false
+        )
+
+        val targetsPath = "transport.udp.unicast-targets"
+        appConfig.getObject(targetsPath).asScala.keys.map {
+          targetName =>
+            svc.AddUnicastTarget(
+              appConfig.getString(s"$targetsPath.$targetName.address"),
+              appConfig.getInt(s"$targetsPath.$targetName.port")
+            )
+        }
+
+        svc
     }
 
     lifecycle.addStopHook { () =>
