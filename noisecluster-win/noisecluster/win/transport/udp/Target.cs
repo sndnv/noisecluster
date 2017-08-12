@@ -24,27 +24,30 @@ namespace noisecluster.win.transport.udp
 {
     public class Target : ITarget
     {
-        private readonly string _address;
-        private readonly int _port;
+        private readonly IPAddress _address;
+        private readonly int _localPort;
         private readonly ILog _log = LogManager.GetLogger(typeof(Target));
         private int _isRunning; //0 = false; 1 = true
         private readonly UdpClient _client;
-        private readonly IPAddress _group;
         private IPEndPoint _endPoint;
 
-        public Target(string address, int port)
+        public Target(int localPort, string address = null)
         {
-            _address = address;
-            _port = port;
+            _localPort = localPort;
 
-            _endPoint = new IPEndPoint(IPAddress.Any, port);
+            _endPoint = new IPEndPoint(IPAddress.Any, localPort);
 
             _client = new UdpClient {ExclusiveAddressUse = false};
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _client.Client.Bind(_endPoint);
 
-            _group = IPAddress.Parse(address);
-            _client.JoinMulticastGroup(_group);
+            if (!string.IsNullOrEmpty(address))
+            {
+                _address = IPAddress.Parse(address);
+                //assumes that if an address is supplied then it is multicast, because
+                //determining if it actually is multicast (in a sensible way) in C# is just... wow
+                _client.JoinMulticastGroup(_address);
+            }
         }
 
         public bool IsActive()
@@ -56,7 +59,7 @@ namespace noisecluster.win.transport.udp
         {
             if (Interlocked.CompareExchange(ref _isRunning, 1, 0) == 0)
             {
-                _log.InfoFormat("Starting transport for channel [{0}:{1}]", _address, _port);
+                _log.InfoFormat("Starting transport for channel [{0}:{1}]", _address, _localPort);
 
                 //will block until stopped
                 while (_isRunning == 1)
@@ -65,14 +68,14 @@ namespace noisecluster.win.transport.udp
                     dataHandler(buffer, buffer.Length);
                 }
 
-                _log.InfoFormat("Stopped transport for channel [{0}:{1}]", _address, _port);
+                _log.InfoFormat("Stopped transport for channel [{0}:{1}]", _address, _localPort);
             }
             else
             {
                 var message = string.Format(
                     "Cannot start transport for channel [{0}:{1}]; transport is already active",
                     _address,
-                    _port
+                    _localPort
                 );
                 _log.Warn(message);
                 throw new InvalidOperationException(message);
@@ -83,14 +86,14 @@ namespace noisecluster.win.transport.udp
         {
             if (Interlocked.CompareExchange(ref _isRunning, 0, 1) == 1)
             {
-                _log.InfoFormat("Stopping transport for channel [{0}:{1}]", _address, _port);
+                _log.InfoFormat("Stopping transport for channel [{0}:{1}]", _address, _localPort);
             }
             else
             {
                 var message = string.Format(
                     "Cannot stop transport for channel [{0}:{1}]; transport is not active",
                     _address,
-                    _port
+                    _localPort
                 );
                 _log.Warn(message);
                 throw new InvalidOperationException(message);
@@ -101,17 +104,22 @@ namespace noisecluster.win.transport.udp
         {
             if (_isRunning == 0)
             {
-                _log.InfoFormat("Closing transport for channel [{0}:{1}]", _address, _port);
-                _client.DropMulticastGroup(_group);
+                _log.InfoFormat("Closing transport for channel [{0}:{1}]", _address, _localPort);
+
+                if (_address != null)
+                {
+                    _client.DropMulticastGroup(_address);
+                }
+
                 _client.Dispose();
-                _log.InfoFormat("Closed transport for channel [{0}:{1}]", _address, _port);
+                _log.InfoFormat("Closed transport for channel [{0}:{1}]", _address, _localPort);
             }
             else
             {
                 var message = string.Format(
                     "Cannot close transport for channel [{0}:{1}]; transport is still active",
                     _address,
-                    _port
+                    _localPort
                 );
                 _log.Warn(message);
                 throw new InvalidOperationException(message);

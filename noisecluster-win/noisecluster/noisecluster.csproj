@@ -62,7 +62,8 @@
     <Compile Include="win\interop\providers\transport\Udp.cs" />
     <Compile Include="win\interop\SourceService.cs" />
     <Compile Include="win\test\transport\aeron\BasicAeronSpec.cs" />
-    <Compile Include="win\test\transport\udp\BasicUdpSpec.cs" />
+    <Compile Include="win\test\transport\udp\MulticastUdpSpec.cs" />
+    <Compile Include="win\test\transport\udp\UnicastUdpSpec.cs" />
     <Compile Include="win\test\Utils.cs" />
     <Compile Include="win\transport\aeron\Defaults.cs" />
     <Compile Include="win\transport\aeron\Source.cs" />

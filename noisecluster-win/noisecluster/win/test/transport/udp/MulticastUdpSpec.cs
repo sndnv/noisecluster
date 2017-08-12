@@ -24,7 +24,7 @@ using NUnit.Framework;
 namespace noisecluster.win.test.transport.udp
 {
     [TestFixture]
-    public class BasicUdpSpec
+    public class MulticastUdpSpec
     {
         private long _testDataSent;
         private long _testDataReceived;
@@ -39,7 +39,7 @@ namespace noisecluster.win.test.transport.udp
         private readonly Random _rnd;
         private Task _targetTask;
 
-        public BasicUdpSpec()
+        public MulticastUdpSpec()
         {
             BasicConfigurator.Configure();
             _testDataSent = 0;
@@ -48,10 +48,11 @@ namespace noisecluster.win.test.transport.udp
             _testDataHandler = (data, length) => { _testDataReceived += length; };
 
             const string address = "225.100.50.25";
-            const int port = 49042;
+            const int sourcePort = 49042;
+            const int targetPort = 49043;
 
-            _source = new Source(address, port);
-            _target = new Target(address, port);
+            _source = new Source(address, targetPort, sourcePort);
+            _target = new Target(targetPort, address);
 
             _testByteArraySize = 1000;
 
@@ -63,7 +64,7 @@ namespace noisecluster.win.test.transport.udp
         {
             _targetTask = new Task(() => { _target.Start(_testDataHandler); });
             _targetTask.Start();
-            
+
             Utils.WaitUntil("target becomes active", 500, 10, () => _target.IsActive());
 
             var bytes = new byte[_testByteArraySize];

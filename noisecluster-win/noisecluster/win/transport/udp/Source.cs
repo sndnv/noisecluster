@@ -14,6 +14,8 @@
   * limitations under the License.
   */
 
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using log4net;
@@ -22,22 +24,36 @@ namespace noisecluster.win.transport.udp
 {
     public class Source : ISource
     {
-        private readonly string _address;
-        private readonly int _port;
         private readonly ILog _log = LogManager.GetLogger(typeof(Source));
         private readonly UdpClient _client;
-        private readonly IPAddress _group;
-        private readonly IPEndPoint _endPoint;
+        private readonly List<IPEndPoint> _targets;
+        private readonly int _localPort;
+        private readonly bool _isMulticast;
 
-        public Source(string address, int port)
+        public Source(List<IPEndPoint> targets, int localPort)
         {
-            _address = address;
-            _port = port;
+            _client = new UdpClient(localPort);
+            _targets = targets;
+            _localPort = localPort;
+        }
 
-            _client = new UdpClient();
-            _group = IPAddress.Parse(address);
-            _client.JoinMulticastGroup(_group);
-            _endPoint = new IPEndPoint(_group, port);
+        public Source(IPEndPoint multicastTarget, int localPort)
+        {
+            _client = new UdpClient(localPort);
+            _client.JoinMulticastGroup(multicastTarget.Address);
+            _targets = new List<IPEndPoint> {multicastTarget};
+            _isMulticast = true;
+            _localPort = localPort;
+        }
+
+        public Source(List<Tuple<string, int>> targets, int localPort)
+            : this(targets.ConvertAll(e => new IPEndPoint(IPAddress.Parse(e.Item1), e.Item2)), localPort)
+        {
+        }
+
+        public Source(string multicastTargetAddress, int multicastTargetPort, int localPort)
+            : this(new IPEndPoint(IPAddress.Parse(multicastTargetAddress), multicastTargetPort), localPort)
+        {
         }
 
         public bool IsActive()
@@ -48,20 +64,25 @@ namespace noisecluster.win.transport.udp
         //docs - 'offset' is unused
         public void Send(byte[] source, int offset, int length)
         {
-            _client.Send(source, length, _endPoint);
+            _targets.ForEach(target => _client.Send(source, length, target));
         }
 
         public void Send(byte[] source)
         {
-            _client.Send(source, source.Length, _endPoint);
+            _targets.ForEach(target => _client.Send(source, source.Length, target));
         }
 
         public void Close()
         {
-            _log.InfoFormat("Stopping transport for channel [{0}:{1}]", _address, _port);
-            _client.DropMulticastGroup(_group);
+            _log.InfoFormat("Stopping transport for channel [{0}:{1}]", string.Join(", ", _targets), _localPort);
+
+            if (_isMulticast)
+            {
+                _client.DropMulticastGroup(_targets[0].Address);
+            }
+
             _client.Dispose();
-            _log.InfoFormat("Stopped transport for channel [{0}:{1}]", _address, _port);
+            _log.InfoFormat("Stopped transport for channel [{0}:{1}]", string.Join(", ", _targets), _localPort);
         }
 
         public void Dispose()

@@ -86,10 +86,12 @@ namespace noisecluster.win.interop
         }
 
         public SourceService(
-            string address,
-            int port,
+            string multicastTargetAddress,
+            int multicastTargetPort,
+            int localPort,
             bool withDebugingHandler = false
-        ) : this(new providers.transport.Udp(address, port), withDebugingHandler)
+        ) : this(new providers.transport.Udp(multicastTargetAddress, multicastTargetPort, localPort),
+            withDebugingHandler)
         {
         }
 

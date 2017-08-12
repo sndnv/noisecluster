@@ -21,18 +21,20 @@ namespace noisecluster.win.interop.providers.transport
 {
     public class Udp : ITransportProvider
     {
-        private readonly string _address;
-        private readonly int _port;
+        private readonly string _multicastTargetAddress;
+        private readonly int _multicastTargetPort;
+        private readonly int _localPort;
 
-        public Udp(string address, int port)
+        public Udp(string multicastTargetAddress, int multicastTargetPort, int localPort)
         {
-            _address = address;
-            _port = port;
+            _multicastTargetAddress = multicastTargetAddress;
+            _multicastTargetPort = multicastTargetPort;
+            _localPort = localPort;
         }
 
         public ISource CreateSource()
         {
-            return new Source(_address, _port);
+            return new Source(_multicastTargetAddress, _multicastTargetPort, _localPort);
         }
 
         public void Dispose()

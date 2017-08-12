@@ -23,7 +23,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
-class BasicUdpSpec extends FlatSpec with Matchers {
+class MulticastUdpSpec extends FlatSpec with Matchers {
   private var testDataSent = 0L
   private var testDataReceived = 0L
 
@@ -34,10 +34,11 @@ class BasicUdpSpec extends FlatSpec with Matchers {
   private implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   private implicit val loggingSystem = ActorSystem("testLoggingSystem")
   private val address = "225.100.50.25"
-  private val port = 49042
+  private val sourcePort = 49042
+  private val targetPort = 49043
 
-  private val source: Source = Source(address, port)
-  private val target: Target = Target(address, port, Defaults.BufferSize)
+  private val source: Source = Source(address, targetPort, sourcePort)
+  private val target: Target = Target(address, targetPort, Defaults.BufferSize)
 
   private val testByteArraySize = 1000
 
