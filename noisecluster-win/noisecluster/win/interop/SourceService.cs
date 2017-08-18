@@ -195,6 +195,18 @@ namespace noisecluster.win.interop
             return true;
         }
 
+        public int? GetHostVolume()
+        {
+            if (_audio == null) return null;
+            return Convert.ToInt32(_audio.Volume.GetMasterVolumeLevelScalar() * 100);
+        }
+
+        public bool? IsHostMuted()
+        {
+            if (_audio == null) return null;
+            return _audio.Volume.IsMuted;
+        }
+
         public void Dispose()
         {
             StopAudio();

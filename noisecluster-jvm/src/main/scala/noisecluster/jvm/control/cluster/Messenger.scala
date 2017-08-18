@@ -22,7 +22,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Put
 import noisecluster.jvm.control.{LocalHandlers, ServiceLevel, ServiceState}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: ExecutionContext) extends Actor with ActorLogging {
@@ -66,7 +66,21 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
     localState = localState.copy(muted = muted)
   }
 
-  protected def getLocalState: NodeState = localState
+  protected def getLocalState: Future[NodeState] = {
+    (for {
+      volume <- localHandlers.getHostVolume
+      muted <- localHandlers.isHostMuted
+    } yield {
+      localState.copy(
+        volume = volume,
+        muted = muted
+      )
+    }).recover {
+      case NonFatal(e) =>
+        log.error("Exception encountered while processing local state: [{}]", e)
+        localState
+    }
+  }
 
   private var receivers: Actor.Receive = {
     case Messages.StartAudio() =>

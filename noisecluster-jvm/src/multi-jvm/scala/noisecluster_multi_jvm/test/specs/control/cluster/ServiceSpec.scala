@@ -124,6 +124,10 @@ object ServiceTestConfig extends MultiNodeConfig {
 
       Future.successful(true)
     }
+
+    override def getHostVolume: Future[Int] = Future.successful(0)
+
+    override def isHostMuted: Future[Boolean] = Future.successful(false)
   }
 }
 

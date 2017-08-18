@@ -142,6 +142,30 @@ class ApplicationService(config: Config, interop: SourceService)(implicit ec: Ex
           Future.failed(e)
       }
     }
+
+    override def getHostVolume: Future[Int] = {
+      try {
+        Option(interop.GetHostVolume()) match {
+          case Some(volume) => Future.successful(volume)
+          case None => Future.failed(new RuntimeException("Failed to retrieve host volume"))
+        }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
+      }
+    }
+
+    override def isHostMuted: Future[Boolean] = {
+      try {
+        Option(interop.IsHostMuted()) match {
+          case Some(state) => Future.successful(state)
+          case None => Future.failed(new RuntimeException("Failed to retrieve mute state"))
+        }
+      } catch {
+        case NonFatal(e) =>
+          Future.failed(e)
+      }
+    }
   }
 
   def shutdown(): Unit = {

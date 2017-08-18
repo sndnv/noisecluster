@@ -21,6 +21,7 @@ import akka.actor.{Address, Props}
 import akka.cluster.ClusterEvent._
 import akka.cluster.MemberStatus
 import akka.cluster.pubsub.DistributedPubSubMediator._
+import akka.pattern.pipe
 import noisecluster.jvm.control._
 
 import scala.concurrent.ExecutionContext
@@ -71,22 +72,25 @@ class SourceMessenger(
           MemberInfo(member.address, member.roles.toSeq, member.status.toString)
       }
 
-      sender ! ClusterState(
-        getLocalState,
-        clusterRef.selfAddress,
-        targets.map {
-          case (name, info) =>
-            (name.split(TargetActorNamePrefix).last, info)
-        },
-        targetsByAddress.map {
-          case (address, name) =>
-            (name.split(TargetActorNamePrefix).last, address)
-        },
-        pingsSent,
-        pongsReceived,
-        clusterRef.state.leader,
-        members.toSeq
-      )
+      getLocalState.map {
+        localState =>
+          ClusterState(
+            localState,
+            clusterRef.selfAddress,
+            targets.map {
+              case (name, info) =>
+                (name.split(TargetActorNamePrefix).last, info)
+            },
+            targetsByAddress.map {
+              case (address, name) =>
+                (name.split(TargetActorNamePrefix).last, address)
+            },
+            pingsSent,
+            pongsReceived,
+            clusterRef.state.leader,
+            members.toSeq
+          )
+      } pipeTo sender
 
     //Cluster Management
     case CurrentClusterState(existingMembers, _, _, _, _) =>

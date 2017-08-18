@@ -35,4 +35,8 @@ trait LocalHandlers {
   def muteHost(): Future[Boolean]
 
   def unmuteHost(): Future[Boolean]
+
+  def getHostVolume: Future[Int]
+
+  def isHostMuted: Future[Boolean]
 }

@@ -16,6 +16,7 @@
 package noisecluster.jvm.control.cluster
 
 import akka.actor.{Address, Props}
+import akka.pattern.pipe
 import noisecluster.jvm.control._
 import noisecluster.jvm.control.cluster.Messages.{Pong, RegisterTarget}
 
@@ -27,7 +28,7 @@ class TargetMessenger(private val localHandlers: LocalHandlers)(implicit ec: Exe
   addReceiver {
     //Cluster Management
     case Messages.Ping() =>
-      sender ! Pong(getLocalState)
+      getLocalState.map(Pong) pipeTo sender
 
     case Messages.RegisterSource() =>
       val sourceName = sender.path.name
