@@ -51,10 +51,10 @@ namespace noisecluster.win.interop
                         "Captured [{0}] bytes of audio data; transport is [{1}] and [{2}]; ",
                         length,
                         _isTransportRunning == 1 ? "running" : "not running",
-                        _transport.IsActive() ? "active" : "not active"
+                        (_transport != null && _transport.IsActive()) ? "active" : "not active"
                     );
 
-                    if (_isTransportRunning == 1 && _transport.IsActive())
+                    if (_isTransportRunning == 1 && _transport != null && _transport.IsActive())
                     {
                         _transport.Send(data, 0, length);
                         _log.DebugFormat("Sent [{0}] bytes of audio data", length);
@@ -65,7 +65,7 @@ namespace noisecluster.win.interop
             {
                 _dataHandler = (data, length) =>
                 {
-                    if (_isTransportRunning == 1 && _transport.IsActive())
+                    if (_isTransportRunning == 1 && _transport != null && _transport.IsActive())
                     {
                         _transport.Send(data, 0, length);
                     }
@@ -141,7 +141,7 @@ namespace noisecluster.win.interop
 
         public bool StartAudio(int sampleRate, int bitsPerSample)
         {
-            if (_audio != null || _transport == null) return false;
+            if (_audio != null) return false;
 
             _audio = new WasapiRecorder(sampleRate, bitsPerSample, _dataHandler);
             _audio.Start();
