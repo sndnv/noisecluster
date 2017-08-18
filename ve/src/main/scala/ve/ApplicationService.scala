@@ -40,6 +40,10 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
     config.getBoolean("audio.format.bigEndian")
   )
 
+  private val serviceNameOpt: Option[String] = if (config.hasPath("app.serviceName")) Some(config.getString("app.serviceName")) else None
+  private val startVolumeOpt: Option[Int] = if (config.hasPath("audio.start.volume")) Some(config.getInt("audio.start.volume")) else None
+  private val startMutedOpt: Option[Boolean] = if (config.hasPath("audio.start.muted")) Some(config.getBoolean("audio.start.muted")) else None
+
   private val transportProvider: TransportProvider = config.getString("transport.provider") match {
     case "aeron" => new ve.providers.transport.Aeron(config.getConfig("transport.aeron"))
     case "udp" => new ve.providers.transport.Udp(config.getConfig("transport.udp"))
@@ -47,6 +51,13 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
 
   private var audioOpt: Option[ByteStreamPlayer] = None
   private var transportOpt: Option[Target] = None
+
+  private def audioWriteHandler(data: Array[Byte], length: Int): Unit = {
+    audioOpt match {
+      case Some(audio) => audio.write(data, length)
+      case None => //do nothing
+    }
+  }
 
   val localHandlers = new LocalHandlers {
     override def startAudio(): Future[Boolean] = {
@@ -83,28 +94,22 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
 
     override def startTransport(): Future[Boolean] = {
       Future {
-        audioOpt match {
-          case Some(audio) =>
-            transportOpt match {
-              case Some(transport) =>
-                Future {
-                  transport.start(audio.write)
-                }
-
-              case None =>
-                val target: Target = config.getString("transport.provider").toLowerCase match {
-                  case "aeron" => transportProvider.createTarget()
-                  case "udp" => transportProvider.createTarget()
-                }
-
-                transportOpt = Some(target)
-                Future {
-                  target.start(audio.write)
-                }
+        transportOpt match {
+          case Some(transport) =>
+            Future {
+              transport.start(audioWriteHandler)
             }
 
           case None =>
-            throw new IllegalStateException("Cannot start transport; no audio available")
+            val target: Target = config.getString("transport.provider").toLowerCase match {
+              case "aeron" => transportProvider.createTarget()
+              case "udp" => transportProvider.createTarget()
+            }
+
+            transportOpt = Some(target)
+            Future {
+              target.start(audioWriteHandler)
+            }
         }
 
         true
@@ -130,8 +135,15 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
     override def stopApplication(restart: Boolean): Future[Boolean] = {
       if (applicationStopTimeout > 0) {
         if (restart) {
-          Future.failed(new NotImplementedError("Application restart in not available"))
-          //TODO - implement as a service restart call?
+          serviceNameOpt match {
+            case Some(serviceName) =>
+              val command = s"/usr/bin/sudo /usr/sbin/service $serviceName restart"
+              command.! match {
+                case 0 => Future.successful(true)
+                case x => Future.failed(new RuntimeException(s"Unexpected exit code returned by command [$command]: [$x]"))
+              }
+            case None => Future.failed(new RuntimeException("No service name specified for application restart."))
+          }
         } else {
           system.scheduler.scheduleOnce(applicationStopTimeout.seconds) {
             System.exit(0)
@@ -140,51 +152,66 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
           Future.successful(true)
         }
       } else {
-        Future.failed(new RuntimeException(s"Application stop/restart is disabled by config"))
+        Future.failed(new RuntimeException("Application stop/restart is disabled by config"))
       }
     }
 
     override def stopHost(restart: Boolean): Future[Boolean] = {
       if (hostStopTimeout > 0) {
         try {
-          s"/usr/bin/sudo /sbin/shutdown ${if (restart) "-r" else "-h"} `/bin/date --date 'now + $hostStopTimeout seconds' '+%H:%M'`".! match {
+          val command = s"/usr/bin/sudo /sbin/shutdown ${if (restart) "-r" else "-h"} `/bin/date --date 'now + $hostStopTimeout seconds' '+%H:%M'`"
+          command.! match {
             case 0 => stopApplication(restart = false)
-            case x => Future.failed(new RuntimeException(s"Unexpected exit code returned by [shutdown] command: [$x]"))
+            case x => Future.failed(new RuntimeException(s"Unexpected exit code returned by command [$command]: [$x]"))
           }
         } catch {
           case NonFatal(e) => Future.failed(e)
         }
       } else {
-        Future.failed(new RuntimeException(s"Host stop/restart is disabled by config"))
+        Future.failed(new RuntimeException("Host stop/restart is disabled by config"))
       }
     }
 
     override def setHostVolume(level: Int): Future[Boolean] = {
       Future {
-        s"/usr/bin/pactl -- set-sink-volume 0 $level%".! match {
+        val command = s"/usr/bin/pactl set-sink-volume @DEFAULT_SINK@ $level%"
+        command.! match {
           case 0 => true
-          case x => throw new RuntimeException(s"Unexpected exit code returned by [set host volume] command: [$x]")
+          case x => throw new RuntimeException(s"Unexpected exit code returned by command [$command]: [$x]")
         }
       }
     }
 
     override def muteHost(): Future[Boolean] = {
       Future {
-        s"/usr/bin/pactl -- set-sink-mute 0 1".! match {
+        val command = "/usr/bin/pactl set-sink-mute @DEFAULT_SINK@ 1"
+        command.! match {
           case 0 => true
-          case x => throw new RuntimeException(s"Unexpected exit code returned by [mute host] command: [$x]")
+          case x => throw new RuntimeException(s"Unexpected exit code returned by command [$command]: [$x]")
         }
       }
     }
 
     override def unmuteHost(): Future[Boolean] = {
       Future {
-        s"/usr/bin/pactl -- set-sink-mute 0 0".! match {
+        val command = "/usr/bin/pactl set-sink-mute @DEFAULT_SINK@ 0"
+        command.! match {
           case 0 => true
-          case x => throw new RuntimeException(s"Unexpected exit code returned by [unmute host] command: [$x]")
+          case x => throw new RuntimeException(s"Unexpected exit code returned by command [$command]: [$x]")
         }
       }
     }
+  }
+
+  startVolumeOpt.map {
+    startVolume =>
+      localHandlers.setHostVolume(startVolume)
+  }
+
+  startMutedOpt.map {
+    startMuted =>
+      if (startMuted) localHandlers.muteHost()
+      else localHandlers.unmuteHost()
   }
 
   def shutdown(): Unit = {
