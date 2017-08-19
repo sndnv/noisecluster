@@ -16,17 +16,71 @@
 package noisecluster.jvm.control.cluster
 
 import akka.actor.{Address, Props}
+import akka.cluster.ClusterEvent.{MemberRemoved, UnreachableMember}
 import akka.pattern.pipe
 import noisecluster.jvm.control._
-import noisecluster.jvm.control.cluster.Messages.{Pong, RegisterTarget}
+import noisecluster.jvm.control.cluster.Messages._
 
 import scala.concurrent.ExecutionContext
 
-class TargetMessenger(private val localHandlers: LocalHandlers)(implicit ec: ExecutionContext) extends Messenger(localHandlers) {
+class TargetMessenger(
+  private val localHandlers: LocalHandlers,
+  private val lastSourceDownAction: Option[NodeAction]
+)(implicit ec: ExecutionContext) extends Messenger(localHandlers) {
   private var sources = Map.empty[String, Address]
+
+  private def handleLastSourceDown(service: ServiceLevel, action: ServiceAction): Unit = {
+    val messages: Seq[Messages.ControlMessage] = getMessagesForServiceAction(service, action)
+
+    if(messages.isEmpty) {
+      log.error("Cannot perform action [{}] for service [{}]", action, service)
+    } else {
+      messages.foreach(message => self ! message)
+    }
+  }
 
   addReceiver {
     //Cluster Management
+    case UnreachableMember(member) =>
+      if (member.hasRole("source") && sources.exists(_._2 == member.address) && sources.size == 1) {
+        lastSourceDownAction match {
+          case Some(action) =>
+            action.delay match {
+              case Some(delay) =>
+                val memberAddress = member.address
+                context.system.scheduler.scheduleOnce(delay) {
+                  if (clusterRef.state.unreachable.exists(_.address == memberAddress)) {
+                    handleLastSourceDown(action.service, action.action)
+                  }
+                }
+
+              case None =>
+                handleLastSourceDown(action.service, action.action)
+            }
+
+          case None => //do nothing
+        }
+      }
+
+    case MemberRemoved(member, _) =>
+      if (member.hasRole("source")) {
+        val source = sources.find(_._2 == member.address)
+
+        source match {
+          case Some((sourceName, _)) =>
+            sources -= sourceName
+            if (sources.isEmpty) {
+              lastSourceDownAction match {
+                case Some(action) => handleLastSourceDown(action.service, action.action)
+                case None => //do nothing
+              }
+            }
+
+          case None =>
+            log.warning("Received [MemberRemoved] event for unregistered source node [{}]", member.address)
+        }
+      }
+
     case Messages.Ping() =>
       getLocalState.map(Pong) pipeTo sender
 
@@ -45,5 +99,8 @@ class TargetMessenger(private val localHandlers: LocalHandlers)(implicit ec: Exe
 }
 
 object TargetMessenger {
-  def props(handlers: LocalHandlers)(implicit ec: ExecutionContext): Props = Props(classOf[TargetMessenger], handlers, ec)
+  def props(
+    handlers: LocalHandlers,
+    lastSourceDownAction: Option[NodeAction]
+  )(implicit ec: ExecutionContext): Props = Props(classOf[TargetMessenger], handlers, lastSourceDownAction, ec)
 }

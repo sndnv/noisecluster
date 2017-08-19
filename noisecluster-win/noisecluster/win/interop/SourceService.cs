@@ -20,9 +20,9 @@ using log4net;
 using log4net.Config;
 using noisecluster.win.audio.capture;
 using noisecluster.win.interop.providers;
+using noisecluster.win.interop.providers.transport;
 using noisecluster.win.transport;
 using noisecluster.win.transport.aeron;
-using noisecluster.win.interop.providers.transport;
 using Aeron = Adaptive.Aeron.Aeron;
 
 namespace noisecluster.win.interop
@@ -91,7 +91,7 @@ namespace noisecluster.win.interop
             int multicastTargetPort,
             int localPort,
             bool withDebugingHandler = false
-        ) : this(new providers.transport.MulticastUdp(multicastTargetAddress, multicastTargetPort, localPort),
+        ) : this(new MulticastUdp(multicastTargetAddress, multicastTargetPort, localPort),
             withDebugingHandler)
         {
         }
@@ -99,7 +99,7 @@ namespace noisecluster.win.interop
         public SourceService(
             int localPort,
             bool withDebugingHandler = false
-        ) : this(new providers.transport.UnicastUdp(localPort),
+        ) : this(new UnicastUdp(localPort),
             withDebugingHandler)
         {
         }
@@ -195,15 +195,15 @@ namespace noisecluster.win.interop
             return true;
         }
 
-        public int? GetHostVolume()
+        public int GetHostVolume()
         {
-            if (_audio == null) return null;
+            if (_audio == null) return 0;
             return Convert.ToInt32(_audio.Volume.GetMasterVolumeLevelScalar() * 100);
         }
 
-        public bool? IsHostMuted()
+        public bool IsHostMuted()
         {
-            if (_audio == null) return null;
+            if (_audio == null) return false;
             return _audio.Volume.IsMuted;
         }
 

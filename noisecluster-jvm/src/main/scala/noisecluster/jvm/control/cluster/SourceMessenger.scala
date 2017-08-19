@@ -110,15 +110,12 @@ class SourceMessenger(
 
     case MemberRemoved(member, _) =>
       if (member.hasRole("target")) {
-        val targetAddress = member.address
-        val targetName = targetsByAddress(targetAddress)
-
-        if (!targets.contains(targetName)) {
-          log.warning("Received [MemberRemoved] event for unregistered target node [{}]", targetName)
+        if (!targetsByAddress.contains(member.address)) {
+          log.warning("Received [MemberRemoved] event for unregistered target node [{}]", member.address)
         }
         else {
-          targets -= targetName
-          targetsByAddress -= targetAddress
+          targets -= targetsByAddress(member.address)
+          targetsByAddress -= member.address
         }
       }
 

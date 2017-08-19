@@ -16,10 +16,19 @@
 package noisecluster.jvm.control
 
 import akka.actor.Address
+import noisecluster.jvm.control.cluster.Messages._
+
+import scala.concurrent.duration.FiniteDuration
 
 package object cluster {
   val SourceActorNamePrefix: String = "source_"
   val TargetActorNamePrefix: String = "target_"
+
+  case class NodeAction(
+    service: ServiceLevel,
+    action: ServiceAction,
+    delay: Option[FiniteDuration] = None
+  )
 
   case class NodeState(
     audio: ServiceState,
@@ -52,4 +61,35 @@ package object cluster {
     members: Seq[MemberInfo]
   )
 
+  def getMessagesForServiceAction(service: ServiceLevel, action: ServiceAction): Seq[Messages.ControlMessage] = {
+    service match {
+      case ServiceLevel.Audio =>
+        action match {
+          case ServiceAction.Start => Seq(StartAudio())
+          case ServiceAction.Stop => Seq(StopAudio())
+          case ServiceAction.Restart => Seq(StopAudio(), StartAudio())
+        }
+
+      case ServiceLevel.Transport =>
+        action match {
+          case ServiceAction.Start => Seq(StartTransport())
+          case ServiceAction.Stop => Seq(StopTransport())
+          case ServiceAction.Restart => Seq(StopTransport(), StartTransport())
+        }
+
+      case ServiceLevel.Application =>
+        action match {
+          case ServiceAction.Start => Seq.empty
+          case ServiceAction.Stop => Seq(StopApplication(restart = false))
+          case ServiceAction.Restart => Seq(StopApplication(restart = true))
+        }
+
+      case ServiceLevel.Host =>
+        action match {
+          case ServiceAction.Start => Seq.empty
+          case ServiceAction.Stop => Seq(StopHost(restart = false))
+          case ServiceAction.Restart => Seq(StopHost(restart = true))
+        }
+    }
+  }
 }

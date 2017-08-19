@@ -17,10 +17,12 @@ package ve
 
 import akka.actor.ActorSystem
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import noisecluster.jvm.control.cluster.TargetService
+import noisecluster.jvm.control.cluster.{NodeAction, TargetService}
+import noisecluster.jvm.control.{ServiceAction, ServiceLevel}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 object Main {
   def main(args: Array[String]): Unit = {
@@ -34,6 +36,33 @@ object Main {
 
     val localHost = appConfig.getString("control.local.host")
     val localPort = appConfig.getInt("control.local.port")
+    val lastSourceDownAction: Option[NodeAction] = if(appConfig.hasPath("control.local.actions.lastSourceDown")) {
+      val lastSourceDownConfig = appConfig.getConfig("control.local.actions.lastSourceDown")
+      Some(
+        NodeAction(
+          lastSourceDownConfig.getString("service").toLowerCase match {
+            case "audio" => ServiceLevel.Audio
+            case "transport" => ServiceLevel.Transport
+            case "application" => ServiceLevel.Application
+            case "host" => ServiceLevel.Host
+            case param => throw new IllegalArgumentException(s"Node action service [$param] is not supported")
+          },
+          lastSourceDownConfig.getString("action").toLowerCase match {
+            case "start" => ServiceAction.Start
+            case "stop" => ServiceAction.Stop
+            case "restart" => ServiceAction.Restart
+            case param => throw new IllegalArgumentException(s"Node action [$param] is not supported")
+          },
+          if(lastSourceDownConfig.hasPath("delay")) {
+            Some(lastSourceDownConfig.getInt("delay").seconds)
+          } else {
+            None
+          }
+        )
+      )
+    } else {
+      None
+    }
 
     val clusterConfig = baseConfig
       .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(localPort))
@@ -49,7 +78,8 @@ object Main {
       clusterSystemName,
       appConfig.getString("control.messengerName"),
       service.localHandlers,
-      Some(clusterConfig)
+      lastSourceDownAction,
+      overrideConfig = Some(clusterConfig)
     )
 
     sys.addShutdownHook {

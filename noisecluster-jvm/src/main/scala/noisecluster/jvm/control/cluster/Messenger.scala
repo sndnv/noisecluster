@@ -29,7 +29,7 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
   //Cluster Setup
   protected val clusterRef = Cluster(context.system)
 
-  override def preStart(): Unit = clusterRef.subscribe(self, classOf[MemberEvent])
+  override def preStart(): Unit = clusterRef.subscribe(self, classOf[MemberEvent], classOf[UnreachableMember])
 
   override def postStop(): Unit = clusterRef.unsubscribe(self)
 

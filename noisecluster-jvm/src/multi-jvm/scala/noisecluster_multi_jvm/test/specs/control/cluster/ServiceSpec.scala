@@ -160,7 +160,8 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
           systemName,
           myself.name,
           testHandlers,
-          Some(
+          lastSourceDownAction = None,
+          overrideConfig = Some(
             baseServiceConfig
               .withValue("akka.cluster.roles", ConfigValueFactory.fromIterable(Seq("target").asJava))
           )
@@ -171,7 +172,8 @@ class ServiceSpec extends MultiNodeSpec(ServiceTestConfig) with AsyncWordSpecLik
           systemName,
           myself.name,
           testHandlers,
-          Some(
+          lastSourceDownAction = None,
+          overrideConfig = Some(
             baseServiceConfig
               .withValue("akka.cluster.roles", ConfigValueFactory.fromIterable(Seq("target").asJava))
           )

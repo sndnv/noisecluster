@@ -25,7 +25,12 @@ class TargetService(
   private val systemName: String,
   private val messengerName: String,
   private val handlers: LocalHandlers,
+  private val lastSourceDownAction: Option[NodeAction] = None,
   private val overrideConfig: Option[Config] = None
 )(implicit ec: ExecutionContext) extends Service(systemName, overrideConfig) {
-  override protected val messenger: ActorRef = system.actorOf(TargetMessenger.props(handlers), s"$TargetActorNamePrefix$messengerName")
+  override protected val messenger: ActorRef =
+    system.actorOf(
+      TargetMessenger.props(handlers, lastSourceDownAction),
+      s"$TargetActorNamePrefix$messengerName"
+    )
 }

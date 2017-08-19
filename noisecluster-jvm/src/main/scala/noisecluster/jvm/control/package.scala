@@ -31,6 +31,18 @@ package object control {
 
   }
 
+  sealed trait ServiceAction
+
+  object ServiceAction {
+
+    case object Start extends ServiceAction
+
+    case object Stop extends ServiceAction
+
+    case object Restart extends ServiceAction
+
+  }
+
   sealed trait ServiceState
 
   object ServiceState {
