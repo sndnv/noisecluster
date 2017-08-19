@@ -29,12 +29,15 @@
     }
 
     .vili-button-cell {
+        display: -webkit-box;
+        display: -ms-flexbox;
         display: flex;
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
         justify-content: center;
 
         .vili-button-container {
             margin: 2vh;
-
             &.hidden { display: none; }
         }
     }

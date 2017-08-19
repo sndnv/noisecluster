@@ -54,7 +54,8 @@ html {
 }
 
 %vili-button-outer-base {
-    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
     &:hover {
         cursor: pointer;
         .vili-button-inner {
@@ -71,9 +72,11 @@ html {
     &.transition {
         @include hexagon-with-override($color-node-transition);
 
-        animation: transition-node 2s infinite;
-        &:before { animation: transition-node-before 2s infinite; }
-        &:after { animation: transition-node-after 2s infinite; }
+        -webkit-animation: transition-node 2s infinite;
+                animation: transition-node 2s infinite;
+
+        &:before { -webkit-animation: transition-node-before 2s infinite; animation: transition-node-before 2s infinite; }
+        &:after { -webkit-animation: transition-node-after 2s infinite; animation: transition-node-after 2s infinite; }
     }
 }
 
@@ -122,7 +125,14 @@ html {
 .vili-button-label {
     position: relative;
     top: 50%;
-    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+}
+
+@-webkit-keyframes transition-blink {
+    from { color: $color-node-transition; }
+    to { color: $color-base-action; }
 }
 
 @keyframes transition-blink {
@@ -130,14 +140,29 @@ html {
     to { color: $color-base-action; }
 }
 
+@-webkit-keyframes transition-node {
+    0%, 49% { background-color: $color-node-transition; }
+    50%, 100% { background-color: $color-base-action; }
+}
+
 @keyframes transition-node {
     0%, 49% { background-color: $color-node-transition; }
     50%, 100% { background-color: $color-base-action; }
 }
 
+@-webkit-keyframes transition-node-before {
+    0%, 49% { border-bottom-color: $color-node-transition; }
+    50%, 100% { border-bottom-color: $color-base-action; }
+}
+
 @keyframes transition-node-before {
     0%, 49% { border-bottom-color: $color-node-transition; }
     50%, 100% { border-bottom-color: $color-base-action; }
+}
+
+@-webkit-keyframes transition-node-after {
+    0%, 49% { border-top-color: $color-node-transition; }
+    50%, 100% { border-top-color: $color-base-action; }
 }
 
 @keyframes transition-node-after {
@@ -157,9 +182,15 @@ html {
     background-color: $color-base-overlay;
     z-index: 10;
     cursor: pointer;
+    display: -webkit-box;
+    display: -ms-flexbox;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
 }
 
 %vili-message-container {

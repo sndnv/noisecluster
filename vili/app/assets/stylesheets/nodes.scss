@@ -46,9 +46,14 @@
     color: $color-node-active;
 
     .vili-container-header {
+        display: -webkit-box;
+        display: -ms-flexbox;
         display: flex;
-        flex-wrap: nowrap;
-        justify-content: center;
+        -ms-flex-wrap: nowrap;
+            flex-wrap: nowrap;
+        -webkit-box-pack: center;
+            -ms-flex-pack: center;
+                justify-content: center;
 
         .vili-container-header-left {
             border-left: 0.2vh solid;
@@ -103,7 +108,8 @@
 
 .vili-container-transition {
     @extend %vili-container;
-    animation: transition-blink 1s infinite alternate;
+    -webkit-animation: transition-blink 1s infinite alternate;
+            animation: transition-blink 1s infinite alternate;
 }
 
 .vili-container-disabled {
@@ -141,7 +147,9 @@
         div {
             display: inline-block;
             background-color: $color-base-background;
-            transform: translateY(-60%);
+            -webkit-transform: translateY(-60%);
+                -ms-transform: translateY(-60%);
+                    transform: translateY(-60%);
             padding: 1vh 2vh 1vh 2vh;
         }
     }
@@ -157,12 +165,16 @@
         display: none;
 
         .uk-grid {
-            transform: translateY(-4vh);
+            -webkit-transform: translateY(-4vh);
+                -ms-transform: translateY(-4vh);
+                    transform: translateY(-4vh);
         }
 
         .vili-sub-state {
             div {
-                transform: translateY(3vh);
+                -webkit-transform: translateY(3vh);
+                    -ms-transform: translateY(3vh);
+                        transform: translateY(3vh);
                 font-weight: bold;
             }
         }
@@ -183,5 +195,6 @@
     @extend %vili-sub-container;
     color: $color-node-transition;
     border-color: $color-node-transition;
-    animation: transition-blink 1s infinite alternate;
+    -webkit-animation: transition-blink 1s infinite alternate;
+            animation: transition-blink 1s infinite alternate;
 }

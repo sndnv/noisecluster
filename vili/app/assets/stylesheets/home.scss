@@ -29,7 +29,8 @@
     @include on-circle($item-count: 9, $circle-size: 65vh, $item-size: 9vh*2.5);
     border: 0.4vh solid $color-base-normal;
     background-color: $color-base-normal;
-    box-shadow: inset 0em 0em 10vh 15vh $color-base-background;
+    -webkit-box-shadow: inset 0em 0em 10vh 15vh $color-base-background;
+            box-shadow: inset 0em 0em 10vh 15vh $color-base-background;
 
     &.inactive {
         border-color: $color-base-error;
