@@ -22,6 +22,9 @@ using log4net;
 
 namespace noisecluster.win.transport.udp
 {
+    /// <summary>
+    /// Source using basic UDP for transport.
+    /// </summary>
     public class Source : ISource
     {
         private readonly ILog _log = LogManager.GetLogger(typeof(Source));
@@ -30,6 +33,11 @@ namespace noisecluster.win.transport.udp
         private readonly int _localPort;
         private readonly bool _isMulticast;
 
+        /// <summary>
+        /// Creates a new UDP unicast source with the specified parameters.
+        /// </summary>
+        /// <param name="targets">the targets to send data to</param>
+        /// <param name="localPort">the local system port to be used for transmission</param>
         public Source(List<IPEndPoint> targets, int localPort)
         {
             _client = new UdpClient(localPort);
@@ -37,6 +45,11 @@ namespace noisecluster.win.transport.udp
             _localPort = localPort;
         }
 
+        /// <summary>
+        /// Creates a new UDP multicast source with the specified parameters.
+        /// </summary>
+        /// <param name="multicastTarget">the multicast endpoint to send data to</param>
+        /// <param name="localPort">the local system port to be used for transmission</param>
         public Source(IPEndPoint multicastTarget, int localPort)
         {
             _client = new UdpClient(localPort);
@@ -46,11 +59,22 @@ namespace noisecluster.win.transport.udp
             _localPort = localPort;
         }
 
+        /// <summary>
+        /// Creates a new UDP unicast source with the specified parameters.
+        /// </summary>
+        /// <param name="targets">the targets to send data to (address, port)</param>
+        /// <param name="localPort">the local system port to be used for transmission</param>
         public Source(List<Tuple<string, int>> targets, int localPort)
             : this(targets.ConvertAll(e => new IPEndPoint(IPAddress.Parse(e.Item1), e.Item2)), localPort)
         {
         }
 
+        /// <summary>
+        /// Creates a new UDP multicast source with the specified parameters.
+        /// </summary>
+        /// <param name="multicastTargetAddress">the multicast address to send data to</param>
+        /// <param name="multicastTargetPort">the multicast port to send data to</param>
+        /// <param name="localPort">the local system port to be used for transmission</param>
         public Source(string multicastTargetAddress, int multicastTargetPort, int localPort)
             : this(new IPEndPoint(IPAddress.Parse(multicastTargetAddress), multicastTargetPort), localPort)
         {
@@ -61,7 +85,12 @@ namespace noisecluster.win.transport.udp
             return true;
         }
 
-        //docs - 'offset' is unused
+        /// <summary>
+        /// Sends the specified number of bytes starting from the specified offset.
+        /// </summary>
+        /// <param name="source">the data to send</param>
+        /// <param name="offset">parameter is unused</param>
+        /// <param name="length">the number of bytes to send</param>
         public void Send(byte[] source, int offset, int length)
         {
             _targets.ForEach(target => _client.Send(source, length, target));

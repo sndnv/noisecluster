@@ -22,6 +22,9 @@ using log4net;
 
 namespace noisecluster.win.transport.udp
 {
+    /// <summary>
+    /// Target using basic UDP for transport.
+    /// </summary>
     public class Target : ITarget
     {
         private readonly IPAddress _address;
@@ -31,6 +34,12 @@ namespace noisecluster.win.transport.udp
         private readonly UdpClient _client;
         private IPEndPoint _endPoint;
 
+        /// <summary>
+        /// Creates a new UDP target with the specified parameters.
+        /// If an address is specified, it assumes it is a multicast address.
+        /// </summary>
+        /// <param name="localPort">the local system port to be used for transmission</param>
+        /// <param name="address">the multicast address to send data to (optional)</param>
         public Target(int localPort, string address = null)
         {
             _localPort = localPort;
@@ -44,8 +53,6 @@ namespace noisecluster.win.transport.udp
             if (!string.IsNullOrEmpty(address))
             {
                 _address = IPAddress.Parse(address);
-                //assumes that if an address is supplied then it is multicast, because
-                //determining if it actually is multicast (in a sensible way) in C# is just... wow
                 _client.JoinMulticastGroup(_address);
             }
         }

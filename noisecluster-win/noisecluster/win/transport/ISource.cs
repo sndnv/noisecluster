@@ -18,11 +18,34 @@ using System;
 
 namespace noisecluster.win.transport
 {
+    /// <summary>
+    /// Base interface for transport sources.
+    /// </summary>
     public interface ISource : IDisposable
     {
+        /// <summary>
+        /// Sends the specified number of bytes starting from the specified offset.
+        /// </summary>
+        /// <param name="source">the data to send</param>
+        /// <param name="offset">the offset to start from</param>
+        /// <param name="length">the number of bytes to send</param>
         void Send(byte[] source, int offset, int length);
+
+        /// <summary>
+        /// Sends all of the supplied data.
+        /// </summary>
+        /// <param name="source">the data to send</param>
         void Send(byte[] source);
+
+        /// <summary>
+        /// Closes the transport and makes it unavailable for further use.
+        /// </summary>
         void Close();
+
+        /// <summary>
+        /// Retrieves the state of the transport.
+        /// </summary>
+        /// <returns>true, if the transport is active</returns>
         bool IsActive();
     }
 }

@@ -24,6 +24,9 @@ using log4net;
 
 namespace noisecluster.win.audio.capture
 {
+    /// <summary>
+    /// Allows audio capture via the Windows Audio Session API (WASAPI).
+    /// </summary>
     public class WasapiRecorder : IDisposable
     {
         private readonly ILog _log = LogManager.GetLogger(typeof(WasapiRecorder));
@@ -34,8 +37,20 @@ namespace noisecluster.win.audio.capture
         private readonly SoundInSource _soundInSource;
         private readonly IWaveSource _convertedSource;
 
+        /// <summary>
+        /// WASAPI data capture handler.
+        /// </summary>
+        /// <param name="data">the data that was captured</param>
+        /// <param name="length">the length of the captured data</param>
         public delegate void DataHandler(byte[] data, int length);
 
+        /// <summary>
+        /// Creates a new instance of the recorder. Captured data will be forwarded via the supplied data handler, if any.
+        /// </summary>
+        /// <param name="sampleRate">the target sample rate</param>
+        /// <param name="bitsPerSample">the target bits per sample</param>
+        /// <param name="handler">captured data handler (optional)</param>
+        /// <see cref="DataHandler"/>
         public WasapiRecorder(int sampleRate, int bitsPerSample, DataHandler handler = null)
         {
             _capture = new WasapiLoopbackCapture();
@@ -44,6 +59,7 @@ namespace noisecluster.win.audio.capture
 
             _soundInSource = new SoundInSource(_capture) {FillWithZeros = false};
 
+            //defines the source conversion
             _convertedSource = _soundInSource
                 .ChangeSampleRate(sampleRate)
                 .ToSampleSource()
@@ -53,6 +69,11 @@ namespace noisecluster.win.audio.capture
             WithDataHandler(handler);
         }
 
+        /// <summary>
+        /// Attaches the supplied data handler to the source.
+        /// </summary>
+        /// <param name="handler">the handler to attach</param>
+        /// <exception cref="ArgumentException">if no handler is supplied</exception>
         public void WithDataHandler(DataHandler handler)
         {
             if (handler != null)
@@ -78,26 +99,42 @@ namespace noisecluster.win.audio.capture
             }
         }
 
+        /// <summary>
+        /// Retrieves the capture endpoint's volume object.
+        /// </summary>
         public AudioEndpointVolume Volume
         {
             get { return _volume; }
         }
 
+        /// <summary>
+        /// Retrieves the capture source's original wave format.
+        /// </summary>
         public WaveFormat SourceFormat
         {
             get { return _soundInSource.WaveFormat; }
         }
 
+        /// <summary>
+        /// Retrieves the capture source's converted (target) wave format.
+        /// </summary>
         public WaveFormat TargetFormat
         {
             get { return _convertedSource.WaveFormat; }
         }
 
+        /// <summary>
+        /// Retrieves the current state of the recorder.
+        /// </summary>
         public bool IsActive
         {
             get { return _isRunning == 1; }
         }
 
+        /// <summary>
+        /// Starts the audio capture.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">if the audio capture was already started or if no data handlers were supplied</exception>
         public void Start()
         {
             if (_hasHandler)
@@ -128,6 +165,10 @@ namespace noisecluster.win.audio.capture
             }
         }
 
+        /// <summary>
+        /// Stops the audio capture.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">if the audio capture is not active</exception>
         public void Stop()
         {
             if (Interlocked.CompareExchange(ref _isRunning, 0, 1) == 1)
@@ -151,6 +192,9 @@ namespace noisecluster.win.audio.capture
             }
         }
 
+        /// <summary>
+        /// Stops the audio capture and disposes of the resources used by the recorder.
+        /// </summary>
         public void Dispose()
         {
             Interlocked.Exchange(ref _isRunning, 0);

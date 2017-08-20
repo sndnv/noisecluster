@@ -19,8 +19,15 @@ using noisecluster.win.transport;
 
 namespace noisecluster.win.interop.providers
 {
+    /// <summary>
+    /// Base interface for interop source transport providers.
+    /// </summary>
     public interface ITransportProvider : IDisposable
     {
+        /// <summary>
+        /// Creates a new source.
+        /// </summary>
+        /// <returns>the requested source</returns>
         ISource CreateSource();
     }
 }

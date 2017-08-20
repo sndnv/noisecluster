@@ -22,6 +22,10 @@ using log4net;
 
 namespace noisecluster.win.transport.aeron
 {
+    /// <summary>
+    /// Target using Aeron for transport.
+    /// See https://github.com/real-logic/aeron for more information on configuration and usage.
+    /// </summary>
     public class Target : ITarget
     {
         private readonly ILog _log = LogManager.GetLogger(typeof(Target));
@@ -37,6 +41,14 @@ namespace noisecluster.win.transport.aeron
             return _isRunning == 1;
         }
 
+        /// <summary>
+        /// Creates a new Aeron target with the specified parameters.
+        /// </summary>
+        /// <param name="aeron">the Aeron connection to use</param>
+        /// <param name="stream">the Aeron stream ID to use</param>
+        /// <param name="channel">the Aeron channel to use</param>
+        /// <param name="idleStrategy">the Aeron idle strategy to use</param>
+        /// <param name="fragmentLimit">the number of message fragments to process per poll operation</param>
         public Target(
             Aeron aeron,
             int stream,
@@ -52,7 +64,6 @@ namespace noisecluster.win.transport.aeron
             _fragmentLimit = fragmentLimit;
         }
 
-        //docs - warn about blocking
         public void Start(DataHandler dataHandler)
         {
             if (Interlocked.CompareExchange(ref _isRunning, 1, 0) == 0)

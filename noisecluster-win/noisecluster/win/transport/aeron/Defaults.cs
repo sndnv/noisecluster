@@ -19,6 +19,9 @@ using Adaptive.Agrona.Concurrent;
 
 namespace noisecluster.win.transport.aeron
 {
+    /// <summary>
+    /// Container for various default values used by the Aeron transport subsystem.
+    /// </summary>
     public static class Defaults
     {
         public static int FragmentLimit = 10;

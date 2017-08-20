@@ -19,12 +19,21 @@ using noisecluster.win.transport.udp;
 
 namespace noisecluster.win.interop.providers.transport
 {
+    /// <summary>
+    /// Multicast UDP source transport provider.
+    /// </summary>
     public class MulticastUdp : ITransportProvider
     {
         private readonly string _multicastTargetAddress;
         private readonly int _multicastTargetPort;
         private readonly int _localPort;
 
+        /// <summary>
+        /// Creates a new instace of the provider with the supplied parameters.
+        /// </summary>
+        /// <param name="multicastTargetAddress">the multicast address to use</param>
+        /// <param name="multicastTargetPort">the multicast port to use</param>
+        /// <param name="localPort">the local port to bind to</param>
         public MulticastUdp(string multicastTargetAddress, int multicastTargetPort, int localPort)
         {
             _multicastTargetAddress = multicastTargetAddress;
@@ -32,11 +41,18 @@ namespace noisecluster.win.interop.providers.transport
             _localPort = localPort;
         }
 
+        /// <summary>
+        /// Creates a new source. Responsibility for disposing of all sources lies with the caller.
+        /// </summary>
+        /// <returns>the new source</returns>
         public ISource CreateSource()
         {
             return new Source(_multicastTargetAddress, _multicastTargetPort, _localPort);
         }
 
+        /// <summary>
+        /// Does nothing. Any sources that were created need to disposed by their callers.
+        /// </summary>
         public void Dispose()
         {
         }

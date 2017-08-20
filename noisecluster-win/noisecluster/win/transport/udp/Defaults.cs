@@ -16,6 +16,9 @@
 
 namespace noisecluster.win.transport.udp
 {
+    /// <summary>
+    /// Container for various default values used by the UDP transport subsystem.
+    /// </summary>
     public static class Defaults
     {
         public static int BufferSizeSmall = 4 * 1024;

@@ -18,13 +18,38 @@ using System;
 
 namespace noisecluster.win.transport
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="length"></param>
     public delegate void DataHandler(byte[] data, int length);
 
+    /// <summary>
+    /// Base interface for transport targets.
+    /// </summary>
     public interface ITarget : IDisposable
     {
+        /// <summary>
+        /// Begins accepting data, forwarding it via the supplied data handler.
+        /// </summary>
+        /// <param name="dataHandler">the handler to use for forwarding the received data</param>
         void Start(DataHandler dataHandler);
+
+        /// <summary>
+        /// Stops accepting data. Restarting data transmission can be done via a call to <see cref="Start"/>.
+        /// </summary>
         void Stop();
+
+        /// <summary>
+        /// Closes the transport and makes it unavailable for further use.
+        /// </summary>
         void Close();
+
+        /// <summary>
+        /// Retrieves the state of the transport.
+        /// </summary>
+        /// <returns>true, if the transport is active</returns>
         bool IsActive();
     }
 }

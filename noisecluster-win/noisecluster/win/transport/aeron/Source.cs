@@ -22,6 +22,10 @@ using log4net;
 
 namespace noisecluster.win.transport.aeron
 {
+    /// <summary>
+    /// Source using Aeron for transport.
+    /// See https://github.com/real-logic/aeron for more information on configuration and usage.
+    /// </summary>
     public class Source : ISource
     {
         private readonly ILog _log = LogManager.GetLogger(typeof(Source));
@@ -30,6 +34,13 @@ namespace noisecluster.win.transport.aeron
         private readonly UnsafeBuffer _buffer;
         private readonly Publication _publication;
 
+        /// <summary>
+        ///  Creates a new Aeron source with the specified parameters.
+        /// </summary>
+        /// <param name="aeron">the Aeron connection to use</param>
+        /// <param name="stream">the Aeron stream ID to use</param>
+        /// <param name="channel">the Aeron channel to use</param>
+        /// <param name="bufferSize">the data buffer size to use (in bytes)</param>
         public Source(Aeron aeron, int stream, string channel, int bufferSize)
         {
             _stream = stream;
@@ -38,6 +49,14 @@ namespace noisecluster.win.transport.aeron
             _publication = aeron.AddPublication(_channel, _stream);
         }
 
+        /// <summary>
+        /// Creates a new Aeron source using UDP with the specified parameters.
+        /// </summary>
+        /// <param name="aeron">the Aeron connection to use</param>
+        /// <param name="stream">the Aeron stream ID to use</param>
+        /// <param name="address">the UDP address to use</param>
+        /// <param name="port">the UDP port to use</param>
+        /// <param name="bufferSize">the data buffer size to use (in bytes)</param>
         public Source(Aeron aeron, int stream, string address, int port, int bufferSize)
             : this(
                 aeron,
@@ -48,6 +67,15 @@ namespace noisecluster.win.transport.aeron
         {
         }
 
+        /// <summary>
+        /// Creates a new Aeron source using UDP with the specified parameters.
+        /// </summary>
+        /// <param name="aeron">the Aeron connection to use</param>
+        /// <param name="stream">the Aeron stream ID to use</param>
+        /// <param name="address">the UDP address to use</param>
+        /// <param name="port">the UDP port to use</param>
+        /// <param name="interface">the local interface to bind to</param>
+        /// <param name="bufferSize">the data buffer size to use (in bytes)</param>
         public Source(Aeron aeron, int stream, string address, int port, string @interface, int bufferSize)
             : this(
                 aeron,
@@ -63,16 +91,29 @@ namespace noisecluster.win.transport.aeron
             return IsConnected;
         }
 
+        /// <summary>
+        /// Checks if the Aeron publication is connected.
+        /// </summary>
         public bool IsConnected
         {
             get { return _publication.IsConnected; }
         }
 
+        /// <summary>
+        /// Checks if the Aeron publication is closed.
+        /// </summary>
         public bool IsClosed
         {
             get { return _publication.IsClosed; }
         }
 
+        /// <summary>
+        /// Offers the buffered data to the subscribers and logs any issues.
+        /// </summary>
+        /// <param name="messageSize">the amount of data to offer/publish</param>
+        /// <returns>the new stream position</returns>
+        /// <exception cref="InvalidOperationException">if the transport is closed or not connected</exception>
+        /// <exception cref="SystemException">if an unknown error occurs</exception>
         private long Offer(int messageSize)
         {
             var result = _publication.Offer(_buffer, 0, messageSize);
