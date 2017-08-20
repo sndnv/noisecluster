@@ -24,6 +24,12 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
+/**
+  * Source service for managing application resources.
+  *
+  * @param config  application configuration
+  * @param interop C#/JNI interop service
+  */
 class ApplicationService(config: Config, interop: SourceService)(implicit ec: ExecutionContext, system: ActorSystem) {
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
   private val sampleRate: Int = config.getInt("audio.format.sampleRate")
@@ -86,8 +92,7 @@ class ApplicationService(config: Config, interop: SourceService)(implicit ec: Ex
     override def stopApplication(restart: Boolean): Future[Boolean] = {
       if (applicationStopTimeout > 0) {
         if (restart) {
-          Future.failed(new NotImplementedError("Application restart in not available"))
-          //TODO - implement as a service restart call?
+          Future.failed(new NotImplementedError("Application restart is not available"))
         } else {
           system.scheduler.scheduleOnce(applicationStopTimeout.seconds) {
             System.exit(0)
@@ -168,6 +173,9 @@ class ApplicationService(config: Config, interop: SourceService)(implicit ec: Ex
     }
   }
 
+  /**
+    * Stops the audio, transport and disposes of all resources.
+    */
   def shutdown(): Unit = {
     interop.StopAudio()
     interop.StopTransport()
