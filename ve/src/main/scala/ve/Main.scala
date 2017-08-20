@@ -26,6 +26,7 @@ import scala.concurrent.duration._
 
 object Main {
   def main(args: Array[String]): Unit = {
+    //config setup
     val baseConfig = ConfigFactory.load()
     val appConfig = baseConfig.getConfig("noisecluster.ve")
 
@@ -36,7 +37,7 @@ object Main {
 
     val localHost = appConfig.getString("control.local.host")
     val localPort = appConfig.getInt("control.local.port")
-    val lastSourceDownAction: Option[NodeAction] = if(appConfig.hasPath("control.local.actions.lastSourceDown")) {
+    val lastSourceDownAction: Option[NodeAction] = if (appConfig.hasPath("control.local.actions.lastSourceDown")) {
       val lastSourceDownConfig = appConfig.getConfig("control.local.actions.lastSourceDown")
       Some(
         NodeAction(
@@ -53,7 +54,7 @@ object Main {
             case "restart" => ServiceAction.Restart
             case param => throw new IllegalArgumentException(s"Node action [$param] is not supported")
           },
-          if(lastSourceDownConfig.hasPath("delay")) {
+          if (lastSourceDownConfig.hasPath("delay")) {
             Some(lastSourceDownConfig.getInt("delay").seconds)
           } else {
             None
@@ -69,7 +70,9 @@ object Main {
       .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(localHost))
       .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(Seq(clusterAddress).asJava))
       .withValue("akka.cluster.roles", ConfigValueFactory.fromIterable(Seq("target").asJava))
+    //end of config setup
 
+    //system setup
     implicit val ec = ExecutionContext.Implicits.global
     implicit val system = ActorSystem(clusterSystemName)
 
@@ -81,6 +84,7 @@ object Main {
       lastSourceDownAction,
       overrideConfig = Some(clusterConfig)
     )
+    //end of system setup
 
     sys.addShutdownHook {
       service.shutdown()

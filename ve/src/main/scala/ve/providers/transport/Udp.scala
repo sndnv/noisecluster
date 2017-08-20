@@ -20,10 +20,15 @@ import com.typesafe.config.Config
 import noisecluster.jvm.transport.{Target, udp}
 import ve.providers.TransportProvider
 
+/**
+  * UDP target transport provider.
+  *
+  * @param config the config to use for the provider and targets setup
+  */
 class Udp(config: Config)(implicit system: ActorSystem) extends TransportProvider {
 
   override def createTarget(): Target = {
-    val addressOpt: Option[String] = if(config.hasPath("address")) {
+    val addressOpt: Option[String] = if (config.hasPath("address")) {
       Some(config.getString("address"))
     } else {
       None

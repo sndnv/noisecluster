@@ -23,6 +23,11 @@ import ve.providers.TransportProvider
 
 import scala.util.control.NonFatal
 
+/**
+  * Aeron target transport provider.
+  *
+  * @param config the config to use for the provider and targets setup
+  */
 class Aeron(config: Config)(implicit system: ActorSystem) extends TransportProvider {
   private val driver: MediaDriver = MediaDriver.launch(aeron.Contexts.Driver.lowLatency)
   private implicit val aeronSystem: io.aeron.Aeron = io.aeron.Aeron.connect(aeron.Contexts.System.default)

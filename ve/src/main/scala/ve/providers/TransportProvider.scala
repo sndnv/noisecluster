@@ -17,8 +17,19 @@ package ve.providers
 
 import noisecluster.jvm.transport.Target
 
+/**
+  * Base trait for target transport providers.
+  */
 trait TransportProvider {
+  /**
+    * Creates a new target.
+    *
+    * @return the requested target
+    */
   def createTarget(): Target
 
+  /**
+    * Releases resources associated with the provider.
+    */
   def shutdown(): Unit
 }

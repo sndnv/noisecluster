@@ -29,6 +29,11 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process._
 import scala.util.control.NonFatal
 
+/**
+  * Target service for managing application resources.
+  *
+  * @param config application configuration
+  */
 class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: ActorSystem) {
   private val applicationStopTimeout: Int = config.getInt("app.stopTimeout") //in seconds
   private val hostStopTimeout: Int = config.getInt("host.stopTimeout") //in seconds
@@ -208,6 +213,11 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
       }
     }
 
+    /**
+      * Retrieves data for the host's default audio sink.
+      *
+      * @return the processed data, if available
+      */
     private def getDefaultSinkData: Option[Seq[String]] = {
       val pactlSinks = "/usr/bin/pactl list sinks".!!.split("Sink #")
 
@@ -266,17 +276,22 @@ class ApplicationService(config: Config)(implicit ec: ExecutionContext, system: 
     }
   }
 
+  //sets the initial host master volume, if specified
   startVolumeOpt.map {
     startVolume =>
       localHandlers.setHostVolume(startVolume)
   }
 
+  //sets the initial host muted state, if specified
   startMutedOpt.map {
     startMuted =>
       if (startMuted) localHandlers.muteHost()
       else localHandlers.unmuteHost()
   }
 
+  /**
+    * Stops the audio, transport and disposes of all resources.
+    */
   def shutdown(): Unit = {
     try {
       audioOpt match {
