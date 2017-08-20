@@ -15,8 +15,28 @@
   */
 package noisecluster.jvm.transport
 
+/**
+  * Base trait for transport sources.
+  */
 trait Source {
+  /**
+    * Sends all of the supplied data.
+    *
+    * @param source the data to send
+    */
   def send(source: Array[Byte]): Unit
+
+  /**
+    * Sends the specified number of bytes starting from the specified offset.
+    *
+    * @param source the data to send
+    * @param offset the offset to start from
+    * @param length the number of bytes to send
+    */
   def send(source: Array[Byte], offset: Int, length: Int): Unit
+
+  /**
+    * Closes the transport and makes it unavailable for further use.
+    */
   def close(): Unit
 }

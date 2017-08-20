@@ -19,6 +19,14 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.cluster.{Cluster, MemberStatus}
 import com.typesafe.config.Config
 
+/**
+  * Base cluster service implementation.
+  *
+  * @note Creates its own actor system.
+  * @param systemName     the actor system name to be used for the service
+  * @param overrideConfig override configuration for the service and actor system (optional)
+  * @see [[akka.actor.ActorSystem]]
+  */
 abstract class Service(private val systemName: String, private val overrideConfig: Option[Config]) {
   protected val system: ActorSystem = overrideConfig match {
     case Some(config) => ActorSystem(systemName, config)
@@ -26,18 +34,32 @@ abstract class Service(private val systemName: String, private val overrideConfi
   }
 
   protected val cluster: Cluster = Cluster(system)
+
   protected val messenger: ActorRef
 
+  /**
+    * Leaves the cluster and terminates the service's actor system.
+    */
   def terminate(): Unit = {
     cluster.leave(cluster.selfAddress)
     system.terminate()
   }
 
+  /**
+    * Retrieves the number of active sources in the cluster.
+    *
+    * @return the active sources count
+    */
   def activeSources: Int = cluster.state.members.count {
     member =>
       member.status == MemberStatus.Up && member.roles.contains("source")
   }
 
+  /**
+    * Retrieves the number of active targets in the cluster.
+    *
+    * @return the active targets count
+    */
   def activeTargets: Int = cluster.state.members.count {
     member =>
       member.status == MemberStatus.Up && member.roles.contains("target")

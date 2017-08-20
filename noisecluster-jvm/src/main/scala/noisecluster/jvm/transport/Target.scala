@@ -15,9 +15,43 @@
   */
 package noisecluster.jvm.transport
 
+/**
+  * Base trait for transport targets.
+  */
 trait Target {
+  /**
+    * Begins accepting data, forwarding it via the supplied data handler.
+    *
+    * @note Specific implementations may block on this call until the target is stopped.
+    *
+    * @param dataHandler the handler to use for forwarding the received data
+    * @see [[noisecluster.jvm.transport.Target#stop]]
+    */
   def start(dataHandler: (Array[Byte], Int) => Unit): Unit
+
+  /**
+    * Stops accepting data.
+    *
+    * @note The target can begin accepting data via a call to [[noisecluster.jvm.transport.Target#start]].
+    *
+    * @see [[noisecluster.jvm.transport.Target#start]]
+    * @see [[noisecluster.jvm.transport.Target#close]]
+    */
   def stop(): Unit
+
+  /**
+    * Closes the transport and makes it unavailable for further use.
+    *
+    * @note Only a transport that is not running can be closed.
+    *
+    * @see [[noisecluster.jvm.transport.Target#stop]]
+    */
   def close(): Unit
+
+  /**
+    * Checks if the transport is active.
+    *
+    * @return true, if the transport is active
+    */
   def isActive: Boolean
 }

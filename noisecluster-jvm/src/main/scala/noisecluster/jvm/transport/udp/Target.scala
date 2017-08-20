@@ -25,6 +25,18 @@ import noisecluster.jvm.transport
 import scala.concurrent.blocking
 import scala.util.control.NonFatal
 
+/**
+  * Target using basic UDP for transport.
+  *
+  * @note If a UDP multicast address is specified, the target will join that multicast group. If a UDP unicast address
+  *       is specified, it is used as the local address to be used for transmission. If no address is specified,
+  *       any local address will be used for transmission.
+  * @param localPort  the local system port to use for transmission
+  * @param bufferSize the data buffer size (in bytes)
+  * @param address    the local address to bind to or the multicast group to join (optional)
+  * @see [[java.net.DatagramSocket#DatagramSocket(int)]]
+  * @see [[java.net.DatagramSocket#DatagramSocket(int, java.net.InetAddress)]]
+  */
 class Target(
   private val localPort: Int,
   private val bufferSize: Int,
@@ -39,7 +51,7 @@ class Target(
   } else {
     address match {
       case Some(localAddress) => new DatagramSocket(localPort, localAddress)
-      case None =>new DatagramSocket(localPort)
+      case None => new DatagramSocket(localPort)
     }
   }
 
@@ -47,7 +59,6 @@ class Target(
 
   override def isActive: Boolean = isRunning.get
 
-  //docs - warn about blocking
   override def start(dataHandler: (Array[Byte], Int) => Unit): Unit = {
     if (isRunning.compareAndSet(false, true)) {
       log.info("Starting transport for channel [{}:{}]", address, localPort)
@@ -94,8 +105,7 @@ class Target(
   override def close(): Unit = {
     if (!isRunning.get) {
       socket match {
-        case multicastSocket: MulticastSocket =>
-          multicastSocket.leaveGroup(address.get)
+        case multicastSocket: MulticastSocket => multicastSocket.leaveGroup(address.get)
         case _ => //do nothing
       }
 
@@ -109,26 +119,70 @@ class Target(
 }
 
 object Target {
-  //docs - creates unicast target at specified address OR multicast target, if multicast address is specified
+  /**
+    * Creates a new UDP target with the specified parameters.
+    *
+    * @note If a UDP multicast address is specified, the target will join that multicast group. If a UDP unicast address
+    *       is specified, it is used as the local address to be used for transmission. If no address is specified,
+    *       any local address will be used for transmission.
+    *
+    * @param address the local address to bind to or the multicast group to join
+    * @param localPort the local system port to use for transmission
+    * @param bufferSize the data buffer size (in bytes)
+    * @return the new target instance
+    * @see [[java.net.DatagramSocket#DatagramSocket(int)]]
+    * @see [[java.net.DatagramSocket#DatagramSocket(int, java.net.InetAddress)]]
+    */
   def apply(
     address: String,
     localPort: Int,
     bufferSize: Int
   )(implicit loggingActorSystem: ActorSystem): Target = new Target(localPort, bufferSize, Some(InetAddress.getByName(address)))
 
-  //docs - creates unicast target
+  /**
+    * Creates a new UDP unicast target with the specified parameters.
+    *
+    * @note No specific local address will be used for the transmission.
+    *
+    * @param localPort the local system port to use for transmission
+    * @param bufferSize the data buffer size (in bytes)
+    * @return the new target instance
+    * @see [[java.net.DatagramSocket#DatagramSocket(int)]]
+    */
   def apply(
     localPort: Int,
     bufferSize: Int
   )(implicit loggingActorSystem: ActorSystem): Target = new Target(localPort, bufferSize, None)
 
-  //docs - creates unicast target at specified address OR multicast target, if multicast address is specified
+  /**
+    * Creates a new UDP target with the specified parameters and the default buffer size.
+    *
+    * @note If a UDP multicast address is specified, the target will join that multicast group. If a UDP unicast address
+    *       is specified, it is used as the local address to be used for transmission. If no address is specified,
+    *       any local address will be used for transmission.
+    *
+    * @param address the local address to bind to or the multicast group to join
+    * @param localPort the local system port to use for transmission
+    * @return the new target instance
+    * @see [[java.net.DatagramSocket#DatagramSocket(int)]]
+    * @see [[java.net.DatagramSocket#DatagramSocket(int, java.net.InetAddress)]]
+    * @see [[noisecluster.jvm.transport.udp.Defaults#BufferSize]]
+    */
   def apply(
     address: String,
     localPort: Int
   )(implicit loggingActorSystem: ActorSystem): Target = new Target(localPort, Defaults.BufferSize, Some(InetAddress.getByName(address)))
 
-  //docs - creates unicast target
+  /**
+    * Creates a new UDP unicast target with the specified parameters and the default buffer size.
+    *
+    * @note No specific local address will be used for the transmission.
+    *
+    * @param localPort the local system port to use for transmission
+    * @return the new target instance
+    * @see [[java.net.DatagramSocket#DatagramSocket(int)]]
+    * @see [[noisecluster.jvm.transport.udp.Defaults#BufferSize]]
+    */
   def apply(
     localPort: Int
   )(implicit loggingActorSystem: ActorSystem): Target = new Target(localPort, Defaults.BufferSize, None)

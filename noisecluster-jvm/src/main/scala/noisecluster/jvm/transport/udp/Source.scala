@@ -23,7 +23,14 @@ import noisecluster.jvm.transport
 
 import scala.util.control.NonFatal
 
-//docs - will only attempt to do multicasting if the first target is a multicast address
+/**
+  * Source using basic UDP for transport.
+  *
+  * @note UDP multicast will only be enabled if the first of the supplied targets is a multicast address.
+  *
+  * @param targets the targets to send data to
+  * @param localPort the local system port to use for transmission
+  */
 class Source(
   private val targets: Seq[(InetAddress, Int)],
   private val localPort: Int
@@ -51,6 +58,7 @@ class Source(
 
   override def send(source: Array[Byte], offset: Int, length: Int): Unit = {
     if (isMulticast) {
+      //in multicast mode, data is sent to the first target only
       try {
         socket.send(new DatagramPacket(source, offset, length, targets.head._1, targets.head._2))
       } catch {
@@ -60,6 +68,7 @@ class Source(
           throw e
       }
     } else {
+      //in unicast mode, data is sent to all targets
       targets.foreach {
         target =>
           try {
@@ -92,10 +101,30 @@ class Source(
 }
 
 object Source {
+  /**
+    * Creates a new UDP source with the specified parameters.
+    *
+    * @note If the supplied target address is a UDP multicast address, the source will work in multicast mode.
+    *
+    * @param targetAddress the address to send data to
+    * @param targetPort the port to send data to
+    * @param localPort the local system port to be used for transmission
+    * @return the new source instance
+    */
   def apply(targetAddress: String, targetPort: Int, localPort: Int)(implicit loggingActorSystem: ActorSystem): Source = {
     new Source(Seq((InetAddress.getByName(targetAddress), targetPort)), localPort)
   }
 
+  /**
+    * Creates a new UDP source with the specified parameters.
+    *
+    * @note If the first target address is a UDP multicast address, the source will work in multicast mode and
+    *       data will be sent only to that address. Otherwise, data will be sent to all targets.
+    *
+    * @param targets the targets to send data to (address, port)
+    * @param localPort the local system port to be used for transmission
+    * @return the new source instance
+    */
   def apply(targets: Seq[(String, Int)], localPort: Int)(implicit loggingActorSystem: ActorSystem): Source = {
     new Source(
       targets.map {

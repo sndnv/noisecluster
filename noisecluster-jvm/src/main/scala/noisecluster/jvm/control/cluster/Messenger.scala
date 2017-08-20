@@ -25,7 +25,14 @@ import noisecluster.jvm.control.{LocalHandlers, ServiceLevel, ServiceState}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: ExecutionContext) extends Actor with ActorLogging {
+/**
+  * Base cluster messenger implementation.
+  *
+  * @param localHandlers the local system handlers to use
+  */
+abstract class Messenger(
+  private val localHandlers: LocalHandlers
+)(implicit ec: ExecutionContext) extends Actor with ActorLogging {
   //Cluster Setup
   protected val clusterRef = Cluster(context.system)
 
@@ -47,6 +54,12 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
     muted = false
   )
 
+  /**
+    * Updates the state of the specified service.
+    *
+    * @param level the service to update
+    * @param state the new service state
+    */
   private def updateLocalState(level: ServiceLevel, state: ServiceState): Unit = {
     val newState = level match {
       case ServiceLevel.Audio => localState.copy(audio = state)
@@ -58,16 +71,32 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
     localState = newState
   }
 
+  /**
+    * Updates the local master volume.
+    *
+    * @param volume the new volume
+    */
   private def updateLocalState(volume: Int): Unit = {
     localState = localState.copy(volume = volume)
   }
 
+  /**
+    * Updates the local muted state.
+    *
+    * @param muted the new state
+    */
   private def updateLocalState(muted: Boolean): Unit = {
     localState = localState.copy(muted = muted)
   }
 
+  /**
+    * Retrieves the local node state.
+    *
+    * @return the node state
+    */
   protected def getLocalState: Future[NodeState] = {
     (for {
+      //attempts to retrieve the host's master volume and muted state
       volume <- localHandlers.getHostVolume
       muted <- localHandlers.isHostMuted
     } yield {
@@ -77,11 +106,16 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
       )
     }).recover {
       case NonFatal(e) =>
+        //failed to retrieve the host's master volume and muted state;
+        //the last available state is returned instead
         log.error("Exception encountered while processing local state: [{}]", e)
         localState
     }
   }
 
+  /**
+    * Default messenger behaviour.
+    */
   private var receivers: Actor.Receive = {
     case Messages.StartAudio() =>
       val previousState = localState.audio
@@ -230,6 +264,11 @@ abstract class Messenger(private val localHandlers: LocalHandlers)(implicit ec: 
       updateLocalState(muted)
   }
 
+  /**
+    * Adds a new messenger behaviour.
+    *
+    * @param next the new behaviour
+    */
   protected def addReceiver(next: Actor.Receive): Unit = {
     receivers = receivers orElse next
   }

@@ -15,6 +15,9 @@
   */
 package noisecluster.jvm.transport.udp
 
+/**
+  * Container for various default values used by the UDP transport subsystem.
+  */
 object Defaults {
   val BufferSize: Int = 4096
 }

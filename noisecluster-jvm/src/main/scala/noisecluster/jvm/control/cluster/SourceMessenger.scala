@@ -27,6 +27,12 @@ import noisecluster.jvm.control._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
+/**
+  * Source messenger responsible for handling target registrations, message forwarding and status updates.
+  *
+  * @param pingInterval the time between target status requests
+  * @param localHandlers the local system handlers to use
+  */
 class SourceMessenger(
   private val pingInterval: FiniteDuration,
   private val localHandlers: LocalHandlers
@@ -49,6 +55,7 @@ class SourceMessenger(
     super.postStop()
   }
 
+  //adds source-specific behaviour
   addReceiver {
     case SourceMessenger.ForwardMessage(target, message) =>
       target match {
@@ -94,6 +101,7 @@ class SourceMessenger(
 
     //Cluster Management
     case CurrentClusterState(existingMembers, _, _, _, _) =>
+      //registers the local source with all existing targets in the cluster
       existingMembers
         .filter(member => member.status == MemberStatus.Up && member.hasRole("target"))
         .foreach {
@@ -104,12 +112,14 @@ class SourceMessenger(
 
     case MemberUp(member) =>
       if (member.hasRole("target")) {
+        //registers with the newly joined target
         context.actorSelection(s"${member.address}/user/$TargetActorNamePrefix*") ! Messages.RegisterSource()
         log.info("Registering with target [{}]", member.address)
       }
 
     case MemberRemoved(member, _) =>
       if (member.hasRole("target")) {
+        //removes the exiting target
         if (!targetsByAddress.contains(member.address)) {
           log.warning("Received [MemberRemoved] event for unregistered target node [{}]", member.address)
         }
@@ -120,6 +130,7 @@ class SourceMessenger(
       }
 
     case Messages.RegisterTarget() =>
+      //registers the target with the local source
       val targetName = sender.path.name
       val targetAddress = sender.path.address
 
@@ -133,6 +144,7 @@ class SourceMessenger(
       }
 
     case message: Messages.Pong =>
+      //records the target's status update
       val targetName = sender.path.name
       if (targets.contains(targetName)) {
         targets += targetName -> Some(NodeInfo(message.state, LocalDateTime.now()))
@@ -146,9 +158,30 @@ class SourceMessenger(
 
 object SourceMessenger {
 
+  /**
+    * Message used for forwarding control messages to targets.
+    *
+    * @param target a list of targets to forward the message to (set to None to forward to all registered targets)
+    * @param message the message to forward
+    */
   case class ForwardMessage(target: Option[String], message: Messages.ControlMessage)
 
+  /**
+    * Message for retrieving the current cluster state, as seen by the local source.
+    *
+    * @return Future[ [[noisecluster.jvm.control.cluster.ClusterState]] ]
+    */
   case class GetClusterState()
 
-  def props(pingInterval: FiniteDuration, localHandlers: LocalHandlers)(implicit ec: ExecutionContext): Props = Props(classOf[SourceMessenger], pingInterval, localHandlers, ec)
+  /**
+    * Creates a new source messenger actor.
+    *
+    * @param pingInterval the time between target status requests
+    * @param localHandlers the local system handlers to use
+    * @return the new actor instance
+    */
+  def props(
+    pingInterval: FiniteDuration,
+    localHandlers: LocalHandlers
+  )(implicit ec: ExecutionContext): Props = Props(classOf[SourceMessenger], pingInterval, localHandlers, ec)
 }

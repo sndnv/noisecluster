@@ -21,6 +21,9 @@ import io.aeron.Aeron
 import io.aeron.driver.MediaDriver
 import org.agrona.concurrent.{BackoffIdleStrategy, IdleStrategy}
 
+/**
+  * Container for various default values used by the Aeron transport subsystem.
+  */
 object Defaults {
   val IdleStrategy: IdleStrategy = new BackoffIdleStrategy(
     100, //max spins

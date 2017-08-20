@@ -21,16 +21,25 @@ import noisecluster.jvm.control.LocalHandlers
 
 import scala.concurrent.ExecutionContext
 
+/**
+  * Target service.
+  *
+  * @param systemName           the actor system name to be used for the service
+  * @param messengerName        the name of the target messenger used by the service
+  * @param localHandlers        the local system handlers to use
+  * @param lastSourceDownAction the action to take when the last available source becomes unreachable (optional)
+  * @param overrideConfig       override configuration for the service and actor system (optional)
+  */
 class TargetService(
   private val systemName: String,
   private val messengerName: String,
-  private val handlers: LocalHandlers,
+  private val localHandlers: LocalHandlers,
   private val lastSourceDownAction: Option[NodeAction] = None,
   private val overrideConfig: Option[Config] = None
 )(implicit ec: ExecutionContext) extends Service(systemName, overrideConfig) {
   override protected val messenger: ActorRef =
     system.actorOf(
-      TargetMessenger.props(handlers, lastSourceDownAction),
+      TargetMessenger.props(localHandlers, lastSourceDownAction),
       s"$TargetActorNamePrefix$messengerName"
     )
 }

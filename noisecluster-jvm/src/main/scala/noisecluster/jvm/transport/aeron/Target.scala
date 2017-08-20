@@ -27,6 +27,19 @@ import org.agrona.concurrent._
 
 import scala.concurrent.blocking
 
+/**
+  * Target using Aeron for transport
+  *
+  * <br><br>
+  * See <a href='https://github.com/real-logic/aeron'>Aeron on Github</a> for more information on configuration and usage.
+  *
+  * @param stream the Aeron stream ID to use
+  * @param channel the Aeron channel to use
+  * @param idleStrategy the Aeron idle strategy to use
+  * @param fragmentLimit the number of message fragments to process per poll operation
+  * @see [[io.aeron.Subscription#poll(io.aeron.logbuffer.FragmentHandler, int)]]
+  * @see [[org.agrona.concurrent.IdleStrategy]]
+  */
 class Target(
   private val stream: Int,
   private val channel: String,
@@ -39,7 +52,6 @@ class Target(
 
   override def isActive: Boolean = isRunning.get
 
-  //docs - warn about blocking
   override def start(dataHandler: (Array[Byte], Int) => Unit): Unit = {
     if (isRunning.compareAndSet(false, true)) {
       log.info("Starting transport for channel [{}] and stream [{}]", channel, stream)
@@ -92,6 +104,18 @@ class Target(
 }
 
 object Target {
+  /**
+    * Creates a new Aeron target using UDP with the specified parameters.
+    *
+    * @param stream the Aeron stream ID to use
+    * @param address the UDP address to use
+    * @param port the UDP port to use
+    * @param idleStrategy the Aeron idle strategy to use
+    * @param fragmentLimit the number of message fragments to process per poll operation
+    * @return the new target instance
+    * @see [[io.aeron.Subscription#poll(io.aeron.logbuffer.FragmentHandler, int)]]
+    * @see [[org.agrona.concurrent.IdleStrategy]]
+    */
   def apply(
     stream: Int,
     address: String,
@@ -106,6 +130,19 @@ object Target {
       fragmentLimit
     )
 
+  /**
+    * Creates a new Aeron target using UDP with the specified parameters.
+    *
+    * @param stream the Aeron stream ID to use
+    * @param address the UDP address to use
+    * @param port the UDP port to use
+    * @param interface the local interface to bind to
+    * @param idleStrategy the Aeron idle strategy to use
+    * @param fragmentLimit the number of message fragments to process per poll operation
+    * @return the new target instance
+    * @see [[io.aeron.Subscription#poll(io.aeron.logbuffer.FragmentHandler, int)]]
+    * @see [[org.agrona.concurrent.IdleStrategy]]
+    */
   def apply(
     stream: Int,
     address: String,
@@ -121,6 +158,17 @@ object Target {
       fragmentLimit
     )
 
+  /**
+    * Creates a new Aeron target with the specified parameters.
+    *
+    * @param stream the Aeron stream ID to use
+    * @param channel the Aeron channel to use
+    * @param idleStrategy the Aeron idle strategy to use
+    * @param fragmentLimit the number of message fragments to process per poll operation
+    * @return the new target instance
+    * @see [[io.aeron.Subscription#poll(io.aeron.logbuffer.FragmentHandler, int)]]
+    * @see [[org.agrona.concurrent.IdleStrategy]]
+    */
   def apply(
     stream: Int,
     channel: String,
@@ -134,6 +182,19 @@ object Target {
       fragmentLimit
     )
 
+  /**
+    * Creates a new Aeron target using UDP with the specified parameters,
+    * the default idle strategy and the default fragment limit.
+    *
+    * @param stream the Aeron stream ID to use
+    * @param address the UDP address to use
+    * @param port the UDP port to use
+    * @return the new target instance
+    * @see [[io.aeron.Subscription#poll(io.aeron.logbuffer.FragmentHandler, int)]]
+    * @see [[org.agrona.concurrent.IdleStrategy]]
+    * @see [[noisecluster.jvm.transport.aeron.Defaults#IdleStrategy]]
+    * @see [[noisecluster.jvm.transport.aeron.Defaults#FragmentLimit]]
+    */
   def apply(
     stream: Int,
     address: String,

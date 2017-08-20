@@ -21,6 +21,16 @@ import javax.sound.sampled.{AudioFormat, AudioSystem, DataLine, SourceDataLine}
 import akka.actor.ActorSystem
 import akka.event.Logging
 
+/**
+  * Create an audio player with the specified format that renders byte data.
+  *
+  * @param format the audio format of the data to be rendered
+  * @param lineBufferSize the audio line buffer size (optional; if not set, the system chooses a value)
+  * @throws javax.sound.sampled.LineUnavailableException if the specified format is not supported by the system
+  *
+  * @see [[javax.sound.sampled.SourceDataLine#open]]
+  * @see [[javax.sound.sampled.AudioSystem#getLine]]
+  */
 class ByteStreamPlayer(
   private val format: AudioFormat,
   private val lineBufferSize: Option[Int]
@@ -37,16 +47,46 @@ class ByteStreamPlayer(
 
   def isActive: Boolean = isRunning.get
 
-  //docs - warn about blocking
+  /**
+    * Writes the supplied data to the audio line.
+    *
+    * @note If it is attempted to write more data than can be currently written to the line
+    *       the [[javax.sound.sampled.SourceDataLine#write]] call will block.
+    *
+    * @param data the data to write
+    * @param length the number of bytes to write
+    * @return the number of bytes actually written
+    * @see [[javax.sound.sampled.SourceDataLine#write]]
+    */
   def write(data: Array[Byte], length: Int): Int = {
     line.write(data, 0, length)
   }
 
-  //docs - warn about discarding data
+  /**
+    * Writes the supplied data to the audio line.
+    *
+    * @note If it is attempted to write more data than can be currently written to the line
+    *       the extra data will be discarded.
+    *
+    * @param data the data to write
+    * @param length the number of bytes to write
+    * @return the number of bytes actually written
+    * @see [[javax.sound.sampled.SourceDataLine#write]]
+    * @see [[javax.sound.sampled.SourceDataLine#available]]
+    */
   def writeNonBlocking(data: Array[Byte], length: Int): Int = {
     line.write(data, 0, length.min(line.available))
   }
 
+  /**
+    * Makes the audio line available for rendering.
+    *
+    * @note Flushes all data queued from the line before rendering starts.
+    *
+    * @see [[javax.sound.sampled.SourceDataLine#flush]]
+    * @see [[javax.sound.sampled.SourceDataLine#start]]
+    * @throws IllegalStateException if the rendering was already started
+    */
   def start(): Unit = {
     if (isRunning.compareAndSet(false, true)) {
       log.info("Starting audio rendering for line [{}]", lineInfo)
@@ -59,6 +99,15 @@ class ByteStreamPlayer(
     }
   }
 
+  /**
+    * Stops audio rendering.
+    *
+    * @note Rendering can be restarted at any time via a call to [[start]].
+    *
+    * @see [[noisecluster.jvm.audio.render.ByteStreamPlayer#close]]
+    * @see [[noisecluster.jvm.audio.render.ByteStreamPlayer#start]]
+    * @throws IllegalStateException if the rendering is not running
+    */
   def stop(): Unit = {
     if (isRunning.compareAndSet(true, false)) {
       log.info("Stopping audio rendering for line [{}]", line)
@@ -70,6 +119,13 @@ class ByteStreamPlayer(
     }
   }
 
+  /**
+    * Closes the stopped audio line and makes the player unavailable for further rendering.
+    *
+    * @see [[noisecluster.jvm.audio.render.ByteStreamPlayer#stop]]
+    * @see [[javax.sound.sampled.SourceDataLine#close]]
+    * @throws IllegalStateException if rendering is still active
+    */
   def close(): Unit = {
     if (!isRunning.get) {
       log.info("Closing audio rendering for line [{}]", line)
@@ -84,9 +140,28 @@ class ByteStreamPlayer(
 }
 
 object ByteStreamPlayer {
+  /**
+    * Creates a new player with the specified audio format and a system-defined buffer size.
+    *
+    * @param format the audio format of the data to be rendered
+    * @throws javax.sound.sampled.LineUnavailableException if the specified format is not supported by the system
+    * @see [[javax.sound.sampled.SourceDataLine#open]]
+    * @see [[javax.sound.sampled.AudioSystem#getLine]]
+    * @return the new player instance
+    */
   def apply(format: AudioFormat)(implicit loggingActorSystem: ActorSystem): ByteStreamPlayer =
     new ByteStreamPlayer(format, None)
 
+  /**
+    * Creates a new player with the specified audio format and buffer size.
+    *
+    * @param format the audio format of the data to be rendered
+    * @param lineBufferSize the audio line buffer size
+    * @throws javax.sound.sampled.LineUnavailableException if the specified format is not supported by the system
+    * @see [[javax.sound.sampled.SourceDataLine#open]]
+    * @see [[javax.sound.sampled.AudioSystem#getLine]]
+    * @return the new player instance
+    */
   def apply(format: AudioFormat, lineBufferSize: Int)(implicit loggingActorSystem: ActorSystem): ByteStreamPlayer =
     new ByteStreamPlayer(format, Some(lineBufferSize))
 }

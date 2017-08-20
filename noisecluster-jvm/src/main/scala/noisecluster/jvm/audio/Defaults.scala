@@ -17,6 +17,9 @@ package noisecluster.jvm.audio
 
 import javax.sound.sampled.AudioFormat
 
+/**
+  * Container for various default values used by the audio subsystem.
+  */
 object Defaults {
   val WasapiAudioFormat: AudioFormat = new AudioFormat(48000, 16, 2, true, false)
 }

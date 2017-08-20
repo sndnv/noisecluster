@@ -24,12 +24,29 @@ package object cluster {
   val SourceActorNamePrefix: String = "source_"
   val TargetActorNamePrefix: String = "target_"
 
+  /**
+    * Container representing an action to be taken by a node after a specified (optional) amount of time.
+    *
+    * @param service the service to be affected by the action (audio, transport, application, host)
+    * @param action  the action to take (start, stop, restart)
+    * @param delay   the amount of time to wait before executing the action (set to None for immediate execution)
+    */
   case class NodeAction(
     service: ServiceLevel,
     action: ServiceAction,
     delay: Option[FiniteDuration] = None
   )
 
+  /**
+    * Container representing a node's state.
+    *
+    * @param audio       the state of the audio service
+    * @param transport   the state of the transport service
+    * @param application the state of the application service
+    * @param host        the state of the host service
+    * @param volume      the host's master volume
+    * @param muted       the host's muted state
+    */
   case class NodeState(
     audio: ServiceState,
     transport: ServiceState,
@@ -39,17 +56,42 @@ package object cluster {
     muted: Boolean
   )
 
+  /**
+    * Container representing a node's state and the timestamp of when the state was recorded.
+    *
+    * @param state      the node state
+    * @param lastUpdate the state timestamp
+    */
   case class NodeInfo(
     state: NodeState,
     lastUpdate: java.time.LocalDateTime
   )
 
+  /**
+    * Container representing a cluster member's status.
+    *
+    * @param address the member's address
+    * @param roles   the roles the member has
+    * @param status  the member's status
+    */
   case class MemberInfo(
     address: Address,
     roles: Seq[String],
     status: String
   )
 
+  /**
+    * Container representing the cluster's state as seen by a source.
+    *
+    * @param localSource     the state of the local node
+    * @param localAddress    the address of the local node
+    * @param targets         the state of all registered targets (name -> node info)
+    * @param targetAddresses the addresses of all targets (name -> address)
+    * @param pings           the number of pings sent by the local node
+    * @param pongs           the number of pongs received by the local node
+    * @param leaderAddress   the address of the cluster leader
+    * @param members         cluster members info
+    */
   case class ClusterState(
     localSource: NodeState,
     localAddress: Address,
@@ -61,6 +103,13 @@ package object cluster {
     members: Seq[MemberInfo]
   )
 
+  /**
+    * Creates a list of cluster messages to be executed based on the requested service action.
+    *
+    * @param service the affected service
+    * @param action  the action to take
+    * @return the list of cluster messages
+    */
   def getMessagesForServiceAction(service: ServiceLevel, action: ServiceAction): Seq[Messages.ControlMessage] = {
     service match {
       case ServiceLevel.Audio =>

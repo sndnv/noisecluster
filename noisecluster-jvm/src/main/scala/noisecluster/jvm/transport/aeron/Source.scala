@@ -24,15 +24,32 @@ import noisecluster.jvm.transport
 import org.agrona.concurrent.UnsafeBuffer
 import org.agrona.{BitUtil, BufferUtil, DirectBuffer}
 
+/**
+  * Source using Aeron for transport.
+  *
+  * <br><br>
+  * See <a href='https://github.com/real-logic/aeron'>Aeron on Github</a> for more information on configuration and usage.
+  *
+  * @param stream the Aeron stream ID to use
+  * @param channel the Aeron channel to use
+  * @param bufferSize the data buffer size to use (in bytes)
+  */
 class Source(
   private val stream: Int,
   private val channel: String,
-  private val bufferSize: Int //in bytes
+  private val bufferSize: Int
 )(implicit loggingActorSystem: ActorSystem, aeron: Aeron) extends transport.Source {
   private val log = Logging.getLogger(loggingActorSystem, this)
   private val publication = aeron.addPublication(channel, stream)
   private val buffer = new UnsafeBuffer(BufferUtil.allocateDirectAligned(bufferSize, BitUtil.CACHE_LINE_LENGTH))
 
+  /**
+    * Offers the buffered data to the subscribers and logs any issues.
+    *
+    * @param messageSize the amount of data to offer/publish
+    * @return the new stream position
+    * @see [[io.aeron.Publication#offer(org.agrona.DirectBuffer, int, int)]]
+    */
   private def offer(messageSize: Int): Long = {
     val result = publication.offer(buffer, 0, messageSize)
     result match {
@@ -103,6 +120,15 @@ class Source(
 }
 
 object Source {
+  /**
+    * Creates a new Aeron source using UDP with the specified parameters.
+    *
+    * @param stream the Aeron stream ID to use
+    * @param address the UDP address to use
+    * @param port the UDP port to use
+    * @param bufferSize the data buffer size to use (in bytes)
+    * @return the new source instance
+    */
   def apply(
     stream: Int,
     address: String,
@@ -115,6 +141,16 @@ object Source {
       bufferSize
     )
 
+  /**
+    * Creates a new Aeron source using UDP with the specified parameters.
+    *
+    * @param stream the Aeron stream ID to use
+    * @param address the UDP address to use
+    * @param port the UDP port to use
+    * @param interface the local interface to bind to
+    * @param bufferSize the data buffer size to use (in bytes)
+    * @return the new source instance
+    */
   def apply(
     stream: Int,
     address: String,
@@ -128,6 +164,14 @@ object Source {
       bufferSize
     )
 
+  /**
+    * Creates a new Aeron source with the specified parameters.
+    *
+    * @param stream the Aeron stream ID to use
+    * @param channel the Aeron channel to use
+    * @param bufferSize the data buffer size to use (in bytes)
+    * @return the new source instance
+    */
   def apply(
     stream: Int,
     channel: String,

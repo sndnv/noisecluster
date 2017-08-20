@@ -17,6 +17,12 @@ package noisecluster.jvm.control.cluster
 
 object Messages {
 
+  /**
+    * Base trait for all cluster control messages.
+    *
+    * Messages are sent/received based on explicit user action or if the target/source is configured to
+    * automatically react to events (such as all sources going offline, a new target starting, etc).
+    */
   sealed trait ControlMessage
 
   case class StartAudio() extends ControlMessage
@@ -37,6 +43,12 @@ object Messages {
 
   case class UnmuteHost() extends ControlMessage
 
+  /**
+    * Base trait for all system messages.
+    *
+    * Messages are sent/received based on internal system events
+    * (such as a new target connecting, a source requesting a status update, etc).
+    */
   sealed trait SystemMessage
 
   case class RegisterSource() extends SystemMessage

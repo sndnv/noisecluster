@@ -19,10 +19,21 @@ import io.aeron.Aeron
 import io.aeron.driver.{MediaDriver, ThreadingMode}
 import org.agrona.concurrent.BusySpinIdleStrategy
 
+/**
+  * Container for various contexts used by the Aeron transport subsystem.
+  */
 object Contexts {
 
+  /**
+    * Aeron driver contexts
+    */
   object Driver {
-    //docs - taken from https://github.com/real-logic/aeron/blob/master/aeron-samples/src/main/java/io/aeron/samples/LowLatencyMediaDriver.java
+    /**
+      * Creates a new low-latency media driver context based on
+      * <a href='https://github.com/real-logic/aeron/blob/master/aeron-samples/src/main/java/io/aeron/samples/LowLatencyMediaDriver.java'>LowLatencyMediaDriver (Github link)</a>.
+      *
+      * @return a new low-latency driver context
+      */
     def lowLatency: MediaDriver.Context = {
       new MediaDriver.Context()
         .termBufferSparseFile(false)
@@ -33,11 +44,21 @@ object Contexts {
         .dirsDeleteOnStart(true)
     }
 
+    /**
+      * Creates a new media driver context.
+      *
+      * @note Deletes the Aeron directories on startup.
+      * @return a new default driver context
+      * @see [[io.aeron.driver.MediaDriver.Context#dirsDeleteOnStart(boolean)]]
+      */
     def default: MediaDriver.Context = {
       new MediaDriver.Context().dirsDeleteOnStart(true)
     }
   }
 
+  /**
+    * Aeron system contexts
+    */
   object System {
     def default: Aeron.Context = {
       new Aeron.Context
