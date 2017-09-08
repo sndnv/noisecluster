@@ -1,20 +1,40 @@
 # vili
-TODO
+Windows source and management UI
 
 ## Getting Started
-TODO
+[noisecluster Wiki](https://github.com/sndnv/noisecluster/wiki/Getting-Started)
 
-## Testing
-TODO
+## Functionality
+- Audio
+  - [x] Capture
+  - [ ] Rendering
+  - [x] Adjust Host Volume
+  - [x] Mute/Unmute Host
+- Transport
+  - [x] Aeron
+  - [x] UDP
+  - [ ] TCP
+- Other
+  - [ ] Stop Host
+  - [ ] Restart Host
+  - [x] Stop Self
+  - [ ] Restart Self
 
 ## Built With
-* TODO
+- Scala 2.12.2
+- sbt 0.13.15
+- C# / .NET 4.5
+- [noisecluster-jvm](https://github.com/sndnv/noisecluster/tree/master/noisecluster-jvm) - Core library (Scala) 
+- [noisecluster-win](https://github.com/sndnv/noisecluster/tree/master/noisecluster-win) - Core library (C#)
+- [Play 2.6.x](https://github.com/playframework/playframework) - UI
+- [core3](https://github.com/Interel-Group/core3) - UI
+- [jni4net](https://github.com/jni4net/jni4net) - JVM <-> .NET bridge
+
+## Tested On
+- Windows 7 and 10
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning.
-
-## Future Goals
-- TODO
 
 ## License
 This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for details

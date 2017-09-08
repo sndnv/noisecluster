@@ -1,20 +1,37 @@
 # ve
-TODO
+Linux rendering service
 
 ## Getting Started
-TODO
+[noisecluster Wiki](https://github.com/sndnv/noisecluster/wiki/Getting-Started)
 
-## Testing
-TODO
+## Functionality
+- Audio
+  - [ ] Capture
+  - [x] Rendering
+  - [x] Adjust Host Volume
+  - [x] Mute/Unmute Host
+- Transport
+  - [x] Aeron
+  - [x] UDP
+  - [ ] TCP
+- Other
+  - [x] Stop Host
+  - [x] Restart Host
+  - [x] Stop Self
+  - [x] Restart Self
 
 ## Built With
-* TODO
+- Scala 2.12.2
+- sbt 0.13.15
+- [noisecluster-jvm](https://github.com/sndnv/noisecluster/tree/master/noisecluster-jvm) - Core library (Scala) 
+
+## Tested On
+- Ubuntu 16.04
+- Linux Mint 18.1 and 18.2
+- Raspbian GNU/Linux 8 (jessie)
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning.
-
-## Future Goals
-- TODO
 
 ## License
 This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for details

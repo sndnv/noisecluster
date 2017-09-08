@@ -1,24 +1,23 @@
-# noisecluster / JVM
-Core Scala library
+# noisecluster / WIN
+Core C# library (Windows only)
 
 ## Getting Started
 [noisecluster Wiki](https://github.com/sndnv/noisecluster/wiki/Getting-Started)
 
 ## Functionality
 - Audio
-  - [ ] Capture
-  - [x] Rendering
+  - [x] Capture
+  - [ ] Rendering
 - Transport
   - [x] Aeron
   - [x] UDP
   - [ ] TCP
-- Cluster Management
+- JVM Interop Service
 
 ## Built With
-- Scala 2.12.2
-- sbt 0.13.15
-- [Aeron 1.3.x](https://github.com/real-logic/aeron) - transport
-- [Akka 2.5.x](https://github.com/akka/akka) - actors and clustering
+- C# / .NET 4.5
+- [Aeron.NET 1.3.x](https://github.com/AdaptiveConsulting/Aeron.NET) - transport
+- [CSCore](https://github.com/filoe/cscore) - Windows audio capture (via WASAPI)
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning.
