@@ -1,4 +1,5 @@
 import sbt.Keys._
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
 name in ThisBuild := "ve"
 licenses in ThisBuild := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
@@ -24,3 +25,16 @@ lazy val ve = (project in file("."))
         oldStrategy(x)
     }
   )
+
+releaseCommitMessage := s"Setting [${(name in ThisBuild).value}] version to [${(version in ThisBuild).value}]"
+
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  setReleaseVersion,
+  commitReleaseVersion,
+  releaseStepCommand("assembly"),
+  setNextVersion,
+  commitNextVersion,
+  pushChanges
+)
