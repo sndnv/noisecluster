@@ -13,7 +13,7 @@ lazy val ve = (project in file("."))
       "io.aeron" % "aeron-client" % "1.3.0",
       "io.aeron" % "aeron-driver" % "1.3.0",
       "com.typesafe.akka" %% "akka-slf4j" % "2.5.3",
-      "noisecluster" %% "noisecluster" % "0.0.1-SNAPSHOT"
+      "noisecluster" %% "noisecluster" % "1.0.0"
     ),
     mainClass in assembly := Some("ve.Main"),
     assemblyMergeStrategy in assembly := {
