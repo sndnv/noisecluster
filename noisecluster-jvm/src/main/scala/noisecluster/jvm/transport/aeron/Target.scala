@@ -57,10 +57,12 @@ class Target(
       log.info("Starting transport for channel [{}] and stream [{}]", channel, stream)
 
       val fragmentAssembler = new FragmentAssembler(
-        (buffer: DirectBuffer, offset: Int, length: Int, _: Header) => {
-          val data = new Array[Byte](length)
-          buffer.getBytes(offset, data)
-          dataHandler(data, length)
+        new FragmentHandler {
+          override def onFragment(buffer: DirectBuffer, offset: Int, length: Int, header: Header): Unit = {
+            val data = new Array[Byte](length)
+            buffer.getBytes(offset, data)
+            dataHandler(data, length)
+          }
         }
       )
 
