@@ -1,7 +1,7 @@
 import sbt.Keys._
 
 name in ThisBuild := "vili"
-licenses in ThisBuild := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+licenses in ThisBuild := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
 homepage in ThisBuild := Some(url("https://github.com/sndnv/noisecluster"))
 
 scalaVersion in ThisBuild := "2.12.2"
@@ -12,7 +12,7 @@ lazy val vili = (project in file("."))
       guice,
       "com.interelgroup" %% "core3" % "2.1.0",
       "org.webjars" % "jquery" % "3.0.0",
-      "noisecluster" %% "noisecluster" % "0.0.1-SNAPSHOT"
+      "noisecluster" %% "noisecluster" % "1.0.0"
     )
   )
   .enablePlugins(PlayScala)
