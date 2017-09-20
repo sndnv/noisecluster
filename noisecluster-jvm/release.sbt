@@ -17,6 +17,8 @@ releaseVersion := {
     }.getOrElse(versionFormatError)
 }
 
+releaseCommitMessage := s"Setting [${(name in ThisBuild).value}] version to [${(version in ThisBuild).value}]"
+
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
   inquireVersions,
